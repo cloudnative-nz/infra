@@ -1,29 +1,44 @@
-# ---
-# apiVersion: cert-manager.io/v1
-# kind: ClusterIssuer
-# metadata:
-#   name: letsencrypt-staging
-# spec:
-#   acme:
-#     # The ACME server URL
-#     server: https://acme-staging-v02.api.letsencrypt.org/directory
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-cloudnative-nz
+  namespace: ingress-nginx
+spec:
+  secretName: wildcard-tls
+  dnsNames:
+    - "cloudnative.nz"
+    - "*.cloudnative.nz"
+  issuerRef:
+    name: letsencrypt-staging
+    kind: ClusterIssuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
 
-#     # Email address used for ACME registration
-#     email: sharing.io@ii.coop # REPLACE THIS WITH YOUR EMAIL!!!
+    # Email address used for ACME registration
+    email: sharing.io@ii.coop # REPLACE THIS WITH YOUR EMAIL!!!
 
-#     # Name of a secret used to store the ACME account private key
-#     privateKeySecretRef:
-#       name: letsencrypt-staging
-#     # https://cert-manager.io/docs/reference/api-docs/#acme.cert-manager.io/v1.ACMEIssuerDNS01ProviderRFC2136
-#     solvers:
-#       - dns01:
-#           rfc2136:
-#             nameserver: 123.253.176.253:53
-#             tsigKeyName: cloudnative
-#             tsigAlgorithm: HMACMD5
-#             tsigSecretSecretRef:
-#               name: pdns
-#               key: key
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    # https://cert-manager.io/docs/reference/api-docs/#acme.cert-manager.io/v1.ACMEIssuerDNS01ProviderRFC2136
+    solvers:
+      - dns01:
+          rfc2136:
+            nameserver: 123.253.176.253:53
+            tsigKeyName: cloudnative
+            tsigAlgorithm: HMACMD5
+            tsigSecretSecretRef:
+              name: pdns
+              key: key
 # allowed-zones:
 #   - cloudnative.nz.
 # webhook:
@@ -77,18 +92,3 @@
 #               # zone: sharing.io # (Optional): When not provided the Zone will obtained by cert-manager's ResolvedZone
 #               # zoneName: sharing.io.
 #               # apiUrl: https://pdns.ii.nz
-# ---
-# apiVersion: cert-manager.io/v1
-# kind: Certificate
-# metadata:
-#   name: wildcard-cloudnative-nz
-#   namespace: ingress-nginx
-# spec:
-#   secretName: wildcard-tls
-#   dnsNames:
-#     - "cloudnative.nz"
-#     - "*.cloudnative.nz"
-#   issuerRef:
-#     name: letsencrypt-staging
-#     kind: ClusterIssuer
-#     group: cert-manager.io
