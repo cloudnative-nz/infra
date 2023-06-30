@@ -58,4 +58,4 @@ spec:
         namespace: cert-manager
       interval: 12h
   values:
-    groupName: sharing.io
+    groupName: cloudnative.nz
