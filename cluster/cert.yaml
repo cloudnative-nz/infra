@@ -69,18 +69,18 @@ spec:
               # zone: sharing.io # (Optional): When not provided the Zone will obtained by cert-manager's ResolvedZone
               # zoneName: sharing.io.
               # apiUrl: https://pdns.ii.nz
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: wildcard-cloudnative-nz
-  namespace: default
-spec:
-  secretName: wildcard-tls
-  dnsNames:
-    - "cloudnative.nz"
-    - "*.cloudnative.nz"
-  issuerRef:
-    name: letsencrypt-staging
-    kind: ClusterIssuer
-    group: cert-manager.io
+# ---
+# apiVersion: cert-manager.io/v1
+# kind: Certificate
+# metadata:
+#   name: wildcard-cloudnative-nz
+#   namespace: default
+# spec:
+#   secretName: wildcard-tls
+#   dnsNames:
+#     - "cloudnative.nz"
+#     - "*.cloudnative.nz"
+#   issuerRef:
+#     name: letsencrypt-staging
+#     kind: ClusterIssuer
+#     group: cert-manager.io
