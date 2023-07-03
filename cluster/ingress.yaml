@@ -67,3 +67,25 @@ spec:
     - hosts:
         - space.cloudnative.nz
         - "*.cloudnative.nz"
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: longhorn
+  namespace: longhorn
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: longhorn.cloudnative.nz
+      http:
+        paths:
+          - backend:
+              service:
+                name: longhorn-frontend
+                port:
+                  number: 80
+            path: /
+            pathType: ImplementationSpecific
+  tls:
+    - hosts:
+        - longhorn.cloudnative.nz
