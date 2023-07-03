@@ -97,7 +97,7 @@ spec:
         # The first is for the powerdns provider:
         # https://registry.terraform.io/providers/pan-net/powerdns/1.0.0/docs#argument-reference
         - name: PDNS_SERVER_URL
-          value: "https://pdns.ii.nz"
+          value: "https://powerdns.ii.nz/server"
         #
         # The second on is for the DNS01 component of
         # https://registry.terraform.io/providers/vancluever/acme/latest/docs/guides/dns-providers-pdns#argument-reference
