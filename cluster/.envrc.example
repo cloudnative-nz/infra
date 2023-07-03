@@ -4,6 +4,7 @@
 # sops -d --output-type dotenv .enc.envrc > .envrc
 # Just needs to be a secrets `pwgen 12` is fine
 export CODER_DB_PASSWORD=
+export CODER_PG_CONNECTION_URL=postgres://postgres:$CODER_DB_PASSWORD@coder-db-postgres.coder.svc.cluster.local:5432/coder?sslmode=disabled
 # We Could set a GITHUB Token for coder, but not for now
 # https://github.com/settings/personal-access-tokens/new
 # https://github.com/settings/personal-access-tokens/1566846
