@@ -96,8 +96,10 @@ spec:
         # Two different providers look for the URL in different places
         # The first is for the powerdns provider:
         # https://registry.terraform.io/providers/pan-net/powerdns/1.0.0/docs#argument-reference
+        # - name: PDNS_SERVER_URL
+        #   value: "https://powerdns.ii.nz/server"
         - name: PDNS_SERVER_URL
-          value: "https://powerdns.ii.nz/server"
+          value: "https://pdns.ii.nz"
         #
         # The second on is for the DNS01 component of
         # https://registry.terraform.io/providers/vancluever/acme/latest/docs/guides/dns-providers-pdns#argument-reference
