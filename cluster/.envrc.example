@@ -1,0 +1,35 @@
+# Encrypt this file with
+# sops -e --input-type dotenv .envrc > .enc.envrc
+# Descript .enc.envrc with
+# sops -d --output-type dotenv .enc.envrc > .envrc
+# Just needs to be a secrets `pwgen 12` is fine
+export CODER_DB_PASSWORD=
+# We Could set a GITHUB Token for coder, but not for now
+# https://github.com/settings/personal-access-tokens/new
+# https://github.com/settings/personal-access-tokens/1566846
+export GITHUB_TOKEN=
+# https://coder.com/docs/v2/latest/admin/auth
+# https://github.com/organizations/cloudnative-nz/settings/applications/new
+# https://github.com/organizations/cloudnative-nz/settings/applications/2247328
+export CODER_OAUTH2_GITHUB_CLIENT_ID=
+export CODER_OAUTH2_GITHUB_CLIENT_SECRET=
+# https://coder.com/docs/v2/latest/admin/git-providers
+# https://github.com/organizations/cloudnative-nz/settings/apps/new
+# https://github.com/organizations/cloudnative-nz/settings/apps/space-cloudnative-nz
+# NOTE: this is NOT the App ID, use Client ID
+export CODER_GITAUTH_0_CLIENT_ID=
+# NOTE: this is Client Secret
+export CODER_GITAUTH_0_CLIENT_SECRET=
+# We created a tsig key with DNS-UPDATE only for cloudnative.nz
+# THIS HAS TO BE a RFC2136 TSIG KEY not a PowerDNS API key
+export PDNS_API_KEY=
+# I created a new project a key
+# https://console.equinix.com/projects/0c218738-18c0-47b5-a404-beb59d9c6585/general
+export METAL_PROJECT_ID=
+# https://console.equinix.com/projects/0c218738-18c0-47b5-a404-beb59d9c6585/api-keys
+export METAL_AUTH_TOKEN=
+# OIDC with authentik deployed to sso.ii.nz
+# https://sso.ii.nz/if/admin/#/core/applications/cloudnative-nz
+# https://sso.ii.nz/if/admin/#/core/providers/2
+export CODER_OIDC_CLIENT_ID=
+export CODER_OIDC_CLIENT_SECRET=
