@@ -1,0 +1,19 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: gitops
+  namespace: flux-system
+spec:
+  interval: 5m
+  path: "./gitops"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  postBuild:
+    substitute:
+      GITOPS_HOST: gitops.cloudnative.nz
+      GITOPS_USERNAME: ii
+      # echo "$GITOPS_PASSWORD" | gitops get bcrypt-hash
+      GITOPS_PASSWORDHASH: "$2a$10$eo/bqj9WLDcVuoA/vdb/GeJVbvgXScxJEy6kZ12BGhANaAgrIqUx."
