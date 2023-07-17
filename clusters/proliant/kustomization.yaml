@@ -2,7 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - nginx.yaml
-  - longhorn.yaml
-  - coder.yaml
-  - secrets.yaml
+  # - longhorn.yaml
+  # - coder.yaml
+  # - secrets.yaml
   # - ingress.yaml
