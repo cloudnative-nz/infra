@@ -40,6 +40,7 @@ spec:
               version: v1
               kind: Deployment
               name: external-dns
+              namespace: external-dns
             patch:
               - op: add
                 path: /spec/template/spec/containers/0/args/-
