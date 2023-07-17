@@ -53,14 +53,16 @@ spec:
                 value: "--rfc2136-zone=${DOMAIN:=example.com}"
               - op: add
                 path: /spec/template/spec/containers/0/args/-
-                value: "--rfc2136-tsig-secret=$TSIG_KEY"
+                value: "--rfc2136-insecure="false"
+              - op: add
+                path: /spec/template/spec/containers/0/args/-
+                value: "--rfc2136-tsig-keyname=${TSIG_KEYNAME:=example_key}"
+              - op: add
+                path: /spec/template/spec/containers/0/args/-
+                value: "--rfc2136-tsig-secret=$TSIG_SECRET:=USEASECRET"
               - op: add
                 path: /spec/template/spec/containers/0/args/-
                 value: "--rfc2136-tsig-secret-alg=${TSIG_ALGORITHM:=HMACMD5}"
-              - op: add
-                path: /spec/template/spec/containers/0/args/-
-                value: "--rfc2136-tsig-secret-keyname=${TSIG_KEYNAME:=example_key}"
-              # - op: add
               #   path: /spec/template/spec/containers/0/args/-
               #   value: "--rfc2136-tsig-axfr"
         # patchesStrategicMerge:
