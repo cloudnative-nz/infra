@@ -10,7 +10,8 @@ spec:
     - "*.${DOMAIN:=ii.nz}"
     - "${DOMAIN:=ii.nz}"
   issuerRef:
-    name: letsencrypt-staging
+    # name: letsencrypt-staging
+    name: letsencrypt
     kind: ClusterIssuer
     group: cert-manager.io
   secretTemplate:
