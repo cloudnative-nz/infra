@@ -66,6 +66,9 @@ spec:
               namespace: external-dns
             patch: |-
               - op: add
+                path: /spec/template/spec/containers/0/env
+                value: []
+              - op: add
                 path: /spec/template/spec/containers/0/env/-
                 value:
                   name: EXTERNAL_DNS_RFC2136_HOST
