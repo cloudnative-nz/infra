@@ -3,6 +3,4 @@ kind: Kustomization
 resources:
   - repo.yaml
   - release.yaml
-  # - secret.yaml
-  # - db-secret.yaml
-  # - ingress.yaml
+  - ingress.yaml
