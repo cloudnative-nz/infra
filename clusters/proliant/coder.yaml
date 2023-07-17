@@ -13,6 +13,11 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: StatefulSet
+      name: coder-db-postgresql
+      namespace: coder
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
