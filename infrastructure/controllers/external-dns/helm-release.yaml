@@ -63,13 +63,3 @@ spec:
               - op: add
                 path: /spec/template/spec/containers/0/args/-
                 value: "--rfc2136-tsig-secret-alg=${TSIG_ALGORITHM:=HMACMD5}"
-              #   path: /spec/template/spec/containers/0/args/-
-              #   value: "--rfc2136-tsig-axfr"
-        # patchesStrategicMerge:
-        #   - kind: Deployment
-        #     apiVerson: v1
-        #     metadata:
-        #       name: external-dns
-        #     spec:
-        #       template:
-        #         containers:
