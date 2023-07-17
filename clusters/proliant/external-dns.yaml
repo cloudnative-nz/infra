@@ -5,6 +5,8 @@ metadata:
   name: external-dns
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: secrets
   interval: 5m
   path: "./infrastructure/controllers/external-dns"
   prune: true
@@ -14,11 +16,10 @@ spec:
   postBuild:
     substitute:
       DOMAIN: cloudnative.nz
-      DNS_PROVIDER: rfc2136
-      TSIG_NAMESERVER: 123.253.176.253
-      TSIG_KEYNAME: cloudnative
-      TSIG_ALGORITHM: HMACMD5
-      TSIG_SECRET: "MUSTCOMEFROMSECRET"
+      EXTERNAL_DNS_PROVIDER: rfc2136
+      EXTERNAL_DNS_RFC2136_HOST: 123.253.176.253
+      EXTERNAL_DNS_RFC2136_TSIG_KEYNAME: cloudnative
+      EXTERNAL_DNS_RFC2136_TSIG_SECRET_ALG: HMACMD5
   # healthChecks:
   #   - apiVersion: apps/v1
   #     kind: Deployment

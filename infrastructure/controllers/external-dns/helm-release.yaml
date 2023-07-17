@@ -51,6 +51,11 @@ spec:
   # - op: add
   #   path: /spec/template/spec/containers/0/args/-
   #   value: "--rfc2136-tsig-secret-alg=${TSIG_ALGORITHM:=HMACMD5}"
+  # - op: add
+  #   path: /spec/template/spec/containers/0/args/-
+  #   value: "--rfc2136-host=${TSIG_NAMESERVER:=1.1.1.1}"
+  #   ./build/external-dns --help 2>&1
+  #   Note that all flags may be replaced with env vars - `--flag` -> `EXTERNAL_DNS_FLAG=1` or `--flag value` -> `EXTERNAL_DNS_FLAG=value`
   postRenderers:
     - kustomize:
         patches:
@@ -61,5 +66,30 @@ spec:
               namespace: external-dns
             patch: |-
               - op: add
-                path: /spec/template/spec/containers/0/args/-
-                value: "--rfc2136-host=${TSIG_NAMESERVER:=1.1.1.1}"
+                path: /spec/template/spec/containers/0/env/-
+                value:
+                  name: EXTERNAL_DNS_RFC2136_HOST
+                  value: ${EXTERNAL_DNS_RFC2136_HOST:=1.1.1.1}
+              - op: add
+                path: /spec/template/spec/containers/0/env/-
+                value:
+                  name: EXTERNAL_DNS_RFC2136_ZONE
+                  value: ${EXTERNAL_DNS_RFC2136_ZONE:=example.com}
+              - op: add
+                path: /spec/template/spec/containers/0/env/-
+                value:
+                  name: EXTERNAL_DNS_RFC2136_TSIG_KEYNAME
+                  value: ${EXTERNAL_DNS_RFC2136_TSIG_KEYNAME:=example.com}
+              - op: add
+                path: /spec/template/spec/containers/0/env/-
+                value:
+                  name: EXTERNAL_DNS_RFC2136_TSIG_SECRET_ALG
+                  value: ${EXTERNAL_DNS_RFC2136_TSIG_SECRET_ALG:=HMACMD5}
+              - op: add
+                path: /spec/template/spec/containers/0/env/-
+                value:
+                  name: EXTERNAL_DNS_RFC2136_TSIG_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name:
+                      key: ${EXTERNAL_DNS_RFC2136_TSIG_KEYNAME:=example.com}

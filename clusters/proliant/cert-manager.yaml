@@ -5,6 +5,8 @@ metadata:
   name: cert-manager
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: secrets
   interval: 5m
   path: "./infrastructure/controllers/cert-manager"
   prune: true
@@ -16,7 +18,6 @@ spec:
       kind: Deployment
       name: cert-manager
       namespace: cert-manager
-
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -34,7 +35,8 @@ spec:
     name: flux-system
   postBuild:
     substitute:
+      ACME_EMAIL: cloudnative@ii.coop
       DOMAIN: cloudnative.nz
-      TSIG_NAMESERVER: 123.253.176.253
-      TSIG_KEYNAME: cloudnative
-      TSIG_ALGORITHM: HMACMD5
+      RFC2136_NAMESERVER: 123.253.176.253
+      RFC2136_TSIG_KEYNAME: cloudnative
+      RFC2136_TSIG_ALGORITHM: HMACMD5

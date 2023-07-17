@@ -42,7 +42,7 @@ spec:
       tls: true
       ingressClassName: nginx
       # tls: true
-      host: longhorn.sharing.io
+      host: ${LONGHORN_INGRESS_HOST:=longhorn.example.com}
       annotations:
         kubernetes.io/ingress.class: nginx
     # enablePSP: true

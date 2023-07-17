@@ -13,7 +13,7 @@ spec:
     name: flux-system
   postBuild:
     substitute:
-      GITOPS_HOST: gitops.cloudnative.nz
+      GITOPS_INGRESS_HOST: gitops.cloudnative.nz
       GITOPS_USERNAME: ii
       # echo "$GITOPS_PASSWORD" | gitops get bcrypt-hash
       GITOPS_PASSWORDHASH: "$2a$10$eo/bqj9WLDcVuoA/vdb/GeJVbvgXScxJEy6kZ12BGhANaAgrIqUx."
