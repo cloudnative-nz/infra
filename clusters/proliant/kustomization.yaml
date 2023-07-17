@@ -8,6 +8,4 @@ resources:
   - cert-manager.yaml
   - external-dns.yaml
   - reflector.yaml
-  # - coder.yaml
-  # - secrets.yaml
-  # - ingress.yaml
+  - coder.yaml
