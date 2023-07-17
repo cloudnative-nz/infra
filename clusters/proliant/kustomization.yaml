@@ -4,6 +4,7 @@ resources:
   - nginx.yaml
   - longhorn.yaml
   - gitops.yaml
+  - cert-manager.yaml
   # - coder.yaml
   # - secrets.yaml
   # - ingress.yaml
