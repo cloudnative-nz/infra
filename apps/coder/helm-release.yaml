@@ -19,25 +19,11 @@ spec:
         namespace: flux-system
       interval: 12h
   values:
-    # service:
-    #   type: LoadBalancer
-    #   loadBalancerIP: ""
     coder:
-      # ingressWildcardHost: "*-coder.ii.nz"
       service:
-        # coder.service.enable -- Whether to create the Service object.
-        # enable: true
-        # # coder.service.type -- The type of service to expose. See:
-        # # https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
         type: ClusterIP
         externalTrafficPolicy: Local
       env:
-        # - name: TF_LOG
-        #   value: "debug"
-        # - name: CODER_VERBOSE
-        #   value: "true"
-        # - name: TF_VAR_metal_project
-        #   value: "82b5c425-8dd4-429e-ae0d-d32f265c63e4"
         - name: CODER_PROVISIONER_DAEMONS
           value: "50"
         - name: CODER_PG_CONNECTION_URL
@@ -45,33 +31,10 @@ spec:
             secretKeyRef:
               name: coder
               key: CODER_PG_CONNECTION_URL
-        # Two different providers look for the URL in different places
-        # The first is for the powerdns provider:
-        # https://registry.terraform.io/providers/pan-net/powerdns/1.0.0/docs#argument-reference
-        # - name: PDNS_SERVER_URL
-        #   value: "https://powerdns.ii.nz/server"
-        # - name: PDNS_SERVER_URL
-        #   value: "https://pdns.ii.nz"
-        #
-        # The second on is for the DNS01 component of
-        # https://registry.terraform.io/providers/vancluever/acme/latest/docs/guides/dns-providers-pdns#argument-reference
-        # - name: PDNS_API_URL
-        #   value: "https://pdns.ii.nz"
-        # - name: PDNS_TTL
-        #   value: "60"
-        # - name: PDNS_API_KEY
-        #   valueFrom:
-        #     secretKeyRef:
-        #       name: coder
-        #       key: PDNS_API_KEY
-        # valueFrom:
-        #   secretKeyRef:
-        #     name: coder
-        #     key: pdns-api-key
         - name: CODER_ACCESS_URL
-          value: "${CODER_ACCESS_URL:=https://space.ii.nz}"
+          value: "${CODER_ACCESS_URL:=https://space.example.com}"
         - name: CODER_WILDCARD_ACCESS_URL
-          value: "${CODER_WILDCARD_ACCESS_URL:=WILD.ii.nz}"
+          value: "*${CODER_WILDCARD_DOMAIN:=.example.com}"
         - name: CODER_SWAGGER_ENABLE
           value: "true"
         - name: CODER_PROMETHEUS_ADDRESS
@@ -120,6 +83,14 @@ spec:
             secretKeyRef:
               name: coder
               key: METAL_AUTH_TOKEN
+        # - name: CODER_ACCESS_URL
+        #  value: "https://coder.ii.nz"
+        # - name: TF_LOG
+        #   value: "debug"
+        # - name: CODER_VERBOSE
+        #   value: "true"
+        # - name: TF_VAR_metal_project
+        #   value: "82b5c425-8dd4-429e-ae0d-d32f265c63e4"
         # https://coder.com/docs/v2/latest/admin/git-providers#multiple-git-providers-enterprise
         # - name: CODER_OIDC_SIGN_IN_TEXT
         #   value: "Sign in with Gitea"
@@ -166,8 +137,8 @@ spec:
         tls:
           enable: true
           # wildcardSecretName:
-        host: "${CODER_HOST:=space.ii.nz}"
-        wildCardHost: "${CODER_WILDCARD_HOST:=WILD.ii.nz}"
+        host: "${CODER_HOST:=space.example.com}"
+        wildCardHost: "*.${CODER_WILDCARD_DOMAIN:=.example.com}"
         service:
           type: ClusterIP
         annotations:
@@ -186,8 +157,6 @@ spec:
             proxy_set_header Connection "upgrade";
             proxy_cache_bypass $http_upgrade;
             }
-        # - name: CODER_ACCESS_URL
-        #  value: "https://coder.ii.nz"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
