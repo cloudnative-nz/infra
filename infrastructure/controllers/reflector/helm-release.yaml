@@ -1,0 +1,29 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+# https://fluxcd.io/flux/components/helm/helmreleases/#specification
+metadata:
+  name: reflector
+  namespace: flux-system
+spec:
+  targetNamespace: reflector
+  releaseName: reflector
+  install:
+    createNamespace: true
+  storageNamespace: flux-system
+  # maxHistory: 10
+  interval: 30m
+  # timeout: 5m0s
+  # suspend: true
+  # dependsOn:
+  #   - name: ingress-nginx
+  chart:
+    spec:
+      chart: reflector
+      version: "7.0.190"
+      sourceRef:
+        kind: HelmRepository
+        name: emberstack
+        namespace: flux-system
+      interval: 12h
+  #   https://github.com/emberstack/kubernetes-reflector/blob/main/README.md

@@ -12,7 +12,7 @@ spec:
         paths:
           - backend:
               service:
-                name: gitops
+                name: gitops-weave-gitops
                 port:
                   number: 9001
             path: /

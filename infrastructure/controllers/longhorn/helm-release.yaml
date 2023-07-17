@@ -40,6 +40,7 @@ spec:
     ingress:
       enabled: true
       tls: true
+      tlsSecret: wildcard-tls
       ingressClassName: nginx
       # tls: true
       host: ${LONGHORN_INGRESS_HOST:=longhorn.example.com}
