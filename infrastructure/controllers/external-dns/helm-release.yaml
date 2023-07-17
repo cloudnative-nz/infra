@@ -32,3 +32,41 @@ spec:
     # We really want to default to rfc2136
     provider: ${EXTERNAL_DNS_PROVIDER:=rfc2136}
   # valuesFrom:
+  # https://fluxcd.io/flux/components/helm/helmreleases/#post-renderers
+  postRenderers:
+    - kustomize:
+        patchesJson6902:
+          - target:
+              version: v1
+              kind: Deployment
+              name: external-dns
+            patch:
+              - op: add
+                path: /spec/template/spec/containers/0/args/-
+                value: "--rfc2136-host=${TSIG_NAMESERVER:=1.1.1.1}"
+              - op: add
+                path: /spec/template/spec/containers/0/args/-
+                value: "--rfc2136-port=53"
+              - op: add
+                path: /spec/template/spec/containers/0/args/-
+                value: "--rfc2136-zone=${DOMAIN:=example.com}"
+              - op: add
+                path: /spec/template/spec/containers/0/args/-
+                value: "--rfc2136-tsig-secret=$TSIG_KEY"
+              - op: add
+                path: /spec/template/spec/containers/0/args/-
+                value: "--rfc2136-tsig-secret-alg=${TSIG_ALGORITHM:=HMACMD5}"
+              - op: add
+                path: /spec/template/spec/containers/0/args/-
+                value: "--rfc2136-tsig-secret-keyname=${TSIG_KEYNAME:=example_key}"
+              # - op: add
+              #   path: /spec/template/spec/containers/0/args/-
+              #   value: "--rfc2136-tsig-axfr"
+        # patchesStrategicMerge:
+        #   - kind: Deployment
+        #     apiVerson: v1
+        #     metadata:
+        #       name: external-dns
+        #     spec:
+        #       template:
+        #         containers:

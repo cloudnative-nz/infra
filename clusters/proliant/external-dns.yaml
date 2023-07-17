@@ -13,7 +13,11 @@ spec:
     name: flux-system
   postBuild:
     substitute:
-      EXTERNAL_DNS_PROVIDER: rfc2136
+      DOMAIN: cloudnative.nz
+      DNS_PROVIDER: rfc2136
+      TSIG_NAMESERVER: 123.253.176.253
+      TSIG_KEYNAME: cloudnative
+      TSIG_ALGORITHM: HMACMD5
   # healthChecks:
   #   - apiVersion: apps/v1
   #     kind: Deployment
