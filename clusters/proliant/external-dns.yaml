@@ -19,7 +19,7 @@ spec:
       EXTERNAL_DNS_PROVIDER: rfc2136
       EXTERNAL_DNS_RFC2136_HOST: 123.253.176.253
       EXTERNAL_DNS_RFC2136_TSIG_KEYNAME: cloudnative
-      EXTERNAL_DNS_RFC2136_TSIG_SECRET_ALG: HMACMD5
+      EXTERNAL_DNS_RFC2136_TSIG_SECRET_ALG: hmac-md5 # hmac-sha256
   # healthChecks:
   #   - apiVersion: apps/v1
   #     kind: Deployment
