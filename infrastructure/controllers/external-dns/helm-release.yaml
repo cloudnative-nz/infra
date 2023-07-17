@@ -8,8 +8,9 @@ metadata:
 spec:
   targetNamespace: external-dns
   releaseName: external-dns
+  # namespace needs to be precrated with rfc2136 secret
   install:
-    createNamespace: true
+    createNamespace: false
   storageNamespace: flux-system
   # maxHistory: 10
   interval: 30m

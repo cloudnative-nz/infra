@@ -7,8 +7,9 @@ metadata:
 spec:
   targetNamespace: coder
   releaseName: coder-db
+  # ns needs to be precreated with coder secret
   install:
-    createNamespace: true
+    createNamespace: false
   storageNamespace: flux-system
   interval: 30m
   chart:
