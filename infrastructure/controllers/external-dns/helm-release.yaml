@@ -35,7 +35,7 @@ spec:
   # https://fluxcd.io/flux/components/helm/helmreleases/#post-renderers
   postRenderers:
     - kustomize:
-        patchesJson6902:
+        patches:
           - target:
               version: v1
               kind: Deployment
