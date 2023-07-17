@@ -1,0 +1,33 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+
+    # Email address used for ACME registration
+    email: ${ACME_EMAIL:=acme@ii.coop}
+
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt
+    # https://cert-manager.io/docs/reference/api-docs/#acme.cert-manager.io/v1.ACMEIssuerDNS01ProviderRFC2136
+    # pdnsutil activate-tsig-key abcs.news sharing.io master # for each domain
+    solvers:
+      - selector:
+          dnsNames:
+            - "*.${DOMAIN:=ii.nz}"
+            - "${DOMAIN:=ii.nz}"
+        dns01:
+          rfc2136:
+            nameserver: ${TSIG_NAMESERVER:=123.253.176.253}:53
+            tsigKeyName: ${TSIG_KEYNAME:=ii.nz}
+            tsigAlgorithm: ${TSIG_ALGORITHM:=HMACSHA256}
+            # the pdns secret needs to exist with key
+            tsigSecretSecretRef:
+              name: pdns
+              key: key

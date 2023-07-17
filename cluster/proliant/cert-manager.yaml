@@ -2,39 +2,43 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: coder-db
+  name: cert-manager
   namespace: flux-system
 spec:
-  prune: true
   interval: 5m
-  dependsOn:
-    - name: longhorn
-  path: "./apps/coder-db"
+  path: "./infrastructure/controllers/cert-manager"
+  prune: true
   sourceRef:
     kind: GitRepository
     name: flux-system
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: cert-manager-cert-manager
+      namespace: cert-manager
+
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: coder
+  name: certificates
   namespace: flux-system
 spec:
-  prune: true
-  interval: 5m
   dependsOn:
-    - name: coder-db
-  path: "./apps/coder"
+    - name: cert-manager
+  interval: 5m
+  path: "./infrastructure/configs/cert-manager"
+  prune: true
   sourceRef:
     kind: GitRepository
     name: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-gpg
   postBuild:
     substitute:
-      CODER_HOST: space.cloudnative.nz
-      CODER_ACCESS_URL: https://space.cloudnative.nz
-      CODER_WILDCARD_HOST: "*.cloudnative.nz"
-      # It's strange, but this far is NOT a url
-      CODER_WILDCARD_ACCESS_URL: "*.cloudnative.nz"
+      DOMAIN: cloudnative.nz
       TSIG_NAMESERVER: 123.153.176.253
       TSIG_KEYNAME: cloudnative
       TSIG_ALGORITHM: HMACMD5

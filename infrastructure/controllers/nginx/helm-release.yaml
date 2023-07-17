@@ -1,0 +1,30 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: ingress-nginx
+  namespace: flux-system
+spec:
+  install:
+    createNamespace: true
+  targetNamespace: ingress-nginx
+  storageNamespace: flux-system
+  maxHistory: 10
+  interval: 30m
+  chart:
+    spec:
+      chart: ingress-nginx
+      version: "4.7.0" # Current as of June 15 2023
+      sourceRef:
+        kind: HelmRepository
+        name: ingress-nginx
+        namespace: flux-system
+      interval: 12h
+  # https://github.com/kubernetes/ingress-nginx/blob/main/charts/ingress-nginx/values.yaml
+  values:
+    controller:
+      extraArgs:
+        default-ssl-certificate: "ingress-nginx/wildcard-tls"
+      service:
+        externalIPs:
+          - ${EXTERNAL_IP:=123.253.178.101}

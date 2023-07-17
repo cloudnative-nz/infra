@@ -1,11 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - cert.yaml
-  - certmanager.yaml
-  - cert-manager-powerdns.yaml
-  - coder.yaml
-  - coder-secret.yaml
-  - ingress.yaml
   - nginx.yaml
-  - pdns-secret.yaml
+  - longhorn.yaml
+  - coder.yaml
+  - secrets.yaml
+  # - ingress.yaml

@@ -1,0 +1,52 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+# https://fluxcd.io/flux/components/helm/helmreleases/#specification
+metadata:
+  name: longhorn
+  namespace: flux-system
+spec:
+  targetNamespace: longhorn
+  install:
+    createNamespace: true
+  storageNamespace: flux-system
+  maxHistory: 10
+  interval: 30m
+  chart:
+    spec:
+      chart: longhorn
+      version: "1.4.2" # Had issues with 1.5.0!
+      interval: 12h
+      sourceRef:
+        kind: HelmRepository
+        name: longhorn
+        namespace: flux-system
+  # dependsOn:
+  #   - name: ingress-nginx
+  # https://github.com/longhorn/charts/blob/v1.5.x/charts/longhorn/values.yaml
+  values:
+    # https://longhorn.io/docs/archives/1.1.0/advanced-resources/rwx-workloads/
+    # By sure to apt-get install nfs-common
+    # https://github.com/longhorn/charts/blob/v1.5.x/charts/longhorn/values.yaml#L83
+    persistence:
+      defaultClass: true
+      defaultFsType: "ext4"
+      defaultMkfsParams: ""
+      defaultClassReplicaCount: 1 # We only have one node
+      defaultDataLocality: disabled # best-effort otherwise
+      reclaimPolicy: "Delete"
+      migrateable: false # What is this?
+    ingress:
+      enabled: true
+      tls: true
+      ingressClassName: nginx
+      # tls: true
+      host: longhorn.sharing.io
+      annotations:
+        kubernetes.io/ingress.class: nginx
+    # enablePSP: true
+    # namespaceOverride: "longhorn"
+    # kubernetes.io/tls-acme: true
+    # tls: true
+    # tlsSecret: wildcard-tls
+  # values:
