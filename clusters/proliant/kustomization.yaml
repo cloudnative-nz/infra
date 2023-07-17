@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - nginx.yaml
   - longhorn.yaml
+  - gitops.yaml
   # - coder.yaml
   # - secrets.yaml
   # - ingress.yaml
