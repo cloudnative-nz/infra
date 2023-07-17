@@ -31,7 +31,7 @@ spec:
                   name: http
             path: /
             pathType: Prefix
-    - host: "${CODER_WILDCARD_HOST:=*.example.com}"
+    - host: "${CODER_WILDCARD_HOST:=WILD.example.com}"
       http:
         paths:
           - backend:
@@ -44,5 +44,4 @@ spec:
   tls:
     - hosts:
         - "${CODER_HOST:=space.example.com}"
-        - "${CODER_WILDCARD_HOST:=*.example.com}"
----
+        - "${CODER_WILDCARD_HOST:=WILD.example.com}"

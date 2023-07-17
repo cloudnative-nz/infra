@@ -71,7 +71,7 @@ spec:
         - name: CODER_ACCESS_URL
           value: "${CODER_ACCESS_URL:=https://space.ii.nz}"
         - name: CODER_WILDCARD_ACCESS_URL
-          value: "${CODER_WILDCARD_ACCESS_URL:=*.ii.nz}"
+          value: "${CODER_WILDCARD_ACCESS_URL:=WILD.ii.nz}"
         - name: CODER_SWAGGER_ENABLE
           value: "true"
         - name: CODER_PROMETHEUS_ADDRESS
@@ -167,7 +167,7 @@ spec:
           enable: true
           # wildcardSecretName:
         host: "${CODER_HOST:=space.ii.nz}"
-        wildCardHost: "${CODER_WILDCARD_HOST:=*.ii.nz}"
+        wildCardHost: "${CODER_WILDCARD_HOST:=WILD.ii.nz}"
         service:
           type: ClusterIP
         annotations:
