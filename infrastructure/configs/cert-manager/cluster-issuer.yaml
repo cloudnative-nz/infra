@@ -29,5 +29,5 @@ spec:
             tsigAlgorithm: ${TSIG_ALGORITHM:=HMACSHA256}
             # the pdns secret needs to exist with key
             tsigSecretSecretRef:
-              name: pdns
-              key: key
+              name: rfc2136
+              key: ${TSIG_KEYNAME:=ii.nz}
