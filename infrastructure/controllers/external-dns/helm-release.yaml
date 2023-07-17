@@ -95,5 +95,5 @@ spec:
                   name: EXTERNAL_DNS_RFC2136_TSIG_SECRET
                   valueFrom:
                     secretKeyRef:
-                      name:
+                      name: rfc2136
                       key: ${EXTERNAL_DNS_RFC2136_TSIG_KEYNAME:=example.com}
