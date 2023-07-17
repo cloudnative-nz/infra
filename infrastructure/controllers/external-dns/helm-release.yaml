@@ -72,13 +72,13 @@ spec:
             # These are used by https://github.com/kubernetes-sigs/external-dns/blob/master/provider/rfc2136/rfc2136.go#L87
             patch: |-
               - op: add
+                path: /spec/template/spec/containers/0/env
+                value: []
+              - op: add
                 path: /spec/template/spec/containers/0/env/-
                 value:
                   name: EXTERNAL_DNS_RFC2136_PORT
                   value: "53"
-              - op: add
-                path: /spec/template/spec/containers/0/env
-                value: []
               - op: add
                 path: /spec/template/spec/containers/0/env/-
                 value:
