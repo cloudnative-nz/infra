@@ -82,6 +82,11 @@ spec:
               - op: add
                 path: /spec/template/spec/containers/0/env/-
                 value:
+                  name: EXTERNAL_DNS_RFC2136_PORT
+                  value: ${EXTERNAL_DNS_RFC2136_PORT:=53}
+              - op: add
+                path: /spec/template/spec/containers/0/env/-
+                value:
                   name: EXTERNAL_DNS_RFC2136_ZONE
                   value: ${EXTERNAL_DNS_RFC2136_ZONE:=example.com}
               - op: add
