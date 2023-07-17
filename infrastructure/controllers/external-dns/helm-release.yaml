@@ -33,6 +33,24 @@ spec:
     provider: ${EXTERNAL_DNS_PROVIDER:=rfc2136}
   # valuesFrom:
   # https://fluxcd.io/flux/components/helm/helmreleases/#post-renderers
+  # - op: add
+  #   path: /spec/template/spec/containers/0/args/-
+  #   value: "--rfc2136-port=53"
+  # - op: add
+  #   path: /spec/template/spec/containers/0/args/-
+  #   value: "--rfc2136-zone=${DOMAIN:=example.com}"
+  # - op: add
+  #   path: /spec/template/spec/containers/0/args/-
+  #   value: "--rfc2136-insecure="false"
+  # - op: add
+  #   path: /spec/template/spec/containers/0/args/-
+  #   value: "--rfc2136-tsig-keyname=${TSIG_KEYNAME:=example_key}"
+  # - op: add
+  #   path: /spec/template/spec/containers/0/args/-
+  #   value: "--rfc2136-tsig-secret=$TSIG_SECRET:=USEASECRET"
+  # - op: add
+  #   path: /spec/template/spec/containers/0/args/-
+  #   value: "--rfc2136-tsig-secret-alg=${TSIG_ALGORITHM:=HMACMD5}"
   postRenderers:
     - kustomize:
         patches:
@@ -45,21 +63,3 @@ spec:
               - op: add
                 path: /spec/template/spec/containers/0/args/-
                 value: "--rfc2136-host=${TSIG_NAMESERVER:=1.1.1.1}"
-              - op: add
-                path: /spec/template/spec/containers/0/args/-
-                value: "--rfc2136-port=53"
-              - op: add
-                path: /spec/template/spec/containers/0/args/-
-                value: "--rfc2136-zone=${DOMAIN:=example.com}"
-              - op: add
-                path: /spec/template/spec/containers/0/args/-
-                value: "--rfc2136-insecure="false"
-              - op: add
-                path: /spec/template/spec/containers/0/args/-
-                value: "--rfc2136-tsig-keyname=${TSIG_KEYNAME:=example_key}"
-              - op: add
-                path: /spec/template/spec/containers/0/args/-
-                value: "--rfc2136-tsig-secret=$TSIG_SECRET:=USEASECRET"
-              - op: add
-                path: /spec/template/spec/containers/0/args/-
-                value: "--rfc2136-tsig-secret-alg=${TSIG_ALGORITHM:=HMACMD5}"
