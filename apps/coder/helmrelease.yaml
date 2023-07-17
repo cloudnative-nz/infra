@@ -7,6 +7,7 @@ metadata:
 spec:
   interval: 30m
   targetNamespace: coder
+  releaseName: coder
   storageNamespace: flux-system
   chart:
     spec:

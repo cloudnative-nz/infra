@@ -9,7 +9,13 @@ metadata:
       This is the Weave GitOps Dashboard.  It provides
       a simple way to get insights into your GitOps workloads.
 spec:
+  targetNamespace: flux-system
+  releaseName: gitops
   interval: 1h0m0s
+  install:
+    createNamespace: false
+  storageNamespace: flux-system
+  # maxHistory: 10
   chart:
     spec:
       chart: weave-gitops

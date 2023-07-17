@@ -5,6 +5,11 @@ metadata:
   name: coder-db
   namespace: flux-system
 spec:
+  targetNamespace: coder
+  releaseName: coder-db
+  install:
+    createNamespace: true
+  storageNamespace: flux-system
   interval: 30m
   chart:
     spec:
@@ -15,10 +20,6 @@ spec:
         name: bitnami
         namespace: flux-system
       interval: 12h
-  targetNamespace: coder
-  install:
-    createNamespace: true
-  storageNamespace: flux-system
   values:
     auth:
       existingSecret: coder-db

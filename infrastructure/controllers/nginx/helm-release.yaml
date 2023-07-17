@@ -8,6 +8,7 @@ spec:
   install:
     createNamespace: true
   targetNamespace: ingress-nginx
+  releaseName: ingress-ngnix
   storageNamespace: flux-system
   maxHistory: 10
   interval: 30m
