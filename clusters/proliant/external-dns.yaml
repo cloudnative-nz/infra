@@ -1,0 +1,42 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cert-manager
+  namespace: flux-system
+spec:
+  interval: 5m
+  path: "./infrastructure/controllers/external-dns"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  postBuild:
+    substitute:
+      EXTERNAL_DNS_PROVIDER: rfc2136
+  # healthChecks:
+  #   - apiVersion: apps/v1
+  #     kind: Deployment
+  #     name: cert-manager-cert-manager
+  #     namespace: cert-manager
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: certificates
+#   namespace: flux-system
+# spec:
+#   dependsOn:
+#     - name: cert-manager
+#   interval: 5m
+#   path: "./infrastructure/configs/cert-manager"
+#   prune: true
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#   postBuild:
+#     substitute:
+#       DOMAIN: cloudnative.nz
+#       TSIG_NAMESERVER: 123.253.176.253
+#       TSIG_KEYNAME: cloudnative
+#       TSIG_ALGORITHM: HMACMD5

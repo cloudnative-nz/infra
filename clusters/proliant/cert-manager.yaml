@@ -35,6 +35,6 @@ spec:
   postBuild:
     substitute:
       DOMAIN: cloudnative.nz
-      TSIG_NAMESERVER: 123.153.176.253
+      TSIG_NAMESERVER: 123.253.176.253
       TSIG_KEYNAME: cloudnative
       TSIG_ALGORITHM: HMACMD5
