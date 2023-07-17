@@ -41,7 +41,7 @@ spec:
               kind: Deployment
               name: external-dns
               namespace: external-dns
-            patch:
+            patch: |-
               - op: add
                 path: /spec/template/spec/containers/0/args/-
                 value: "--rfc2136-host=${TSIG_NAMESERVER:=1.1.1.1}"
