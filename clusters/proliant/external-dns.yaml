@@ -15,9 +15,9 @@ spec:
     name: flux-system
   postBuild:
     substitute:
-      DOMAIN: cloudnative.nz
       EXTERNAL_DNS_PROVIDER: rfc2136
       EXTERNAL_DNS_RFC2136_HOST: 123.253.176.253
+      EXTERNAL_DNS_RFC2136_ZONE: cloudnative.nz
       EXTERNAL_DNS_RFC2136_TSIG_KEYNAME: cloudnative.nz
       EXTERNAL_DNS_RFC2136_TSIG_SECRET_ALG: hmac-sha256 # hmac-sha256
   # healthChecks:
