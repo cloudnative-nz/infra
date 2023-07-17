@@ -5,6 +5,7 @@ resources:
   - longhorn.yaml
   - gitops.yaml
   - cert-manager.yaml
+  - secrets.yaml
   # - coder.yaml
   # - secrets.yaml
   # - ingress.yaml
