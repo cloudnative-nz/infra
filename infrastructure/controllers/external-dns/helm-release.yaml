@@ -55,11 +55,6 @@ spec:
   # - op: add
   #   path: /spec/template/spec/containers/0/args/-
   #   value: "--rfc2136-host=${TSIG_NAMESERVER:=1.1.1.1}"
-  # - op: add
-  #   path: /spec/template/spec/containers/0/env/-
-  #   value:
-  #     name: EXTERNAL_DNS_RFC2136_PORT
-  #     value: "53"
   postRenderers:
     - kustomize:
         patches:
@@ -76,6 +71,11 @@ spec:
             # TODO: Update docs at https://github.com/kubernetes-sigs/external-dns/blob/master/pkg/apis/externaldns/types.go#L548
             # These are used by https://github.com/kubernetes-sigs/external-dns/blob/master/provider/rfc2136/rfc2136.go#L87
             patch: |-
+              - op: add
+                path: /spec/template/spec/containers/0/env/-
+                value:
+                  name: EXTERNAL_DNS_RFC2136_PORT
+                  value: "53"
               - op: add
                 path: /spec/template/spec/containers/0/env
                 value: []
