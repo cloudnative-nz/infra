@@ -38,5 +38,5 @@ spec:
       ACME_EMAIL: cloudnative@ii.coop
       DOMAIN: cloudnative.nz
       RFC2136_NAMESERVER: 123.253.176.253
-      RFC2136_TSIG_KEYNAME: cloudnative
-      RFC2136_TSIG_ALGORITHM: HMACMD5
+      RFC2136_TSIG_KEYNAME: cloudnative.nz
+      RFC2136_TSIG_ALGORITHM: HMACSHA256
