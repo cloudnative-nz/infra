@@ -32,9 +32,9 @@ spec:
     substitute:
       CODER_HOST: space.cloudnative.nz
       CODER_ACCESS_URL: https://space.cloudnative.nz
-      CODER_WILDCARD_HOST: "*.cloudnative.nz"
+      CODER_WILDCARD_HOST: "WILD.cloudnative.nz"
       # It's strange, but this far is NOT a url
-      CODER_WILDCARD_ACCESS_URL: "*.cloudnative.nz"
+      CODER_WILDCARD_ACCESS_URL: "WILD.cloudnative.nz"
       TSIG_NAMESERVER: 123.153.176.253
       TSIG_KEYNAME: cloudnative.nz
       TSIG_ALGORITHM: HMACSHA256
