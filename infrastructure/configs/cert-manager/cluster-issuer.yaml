@@ -22,6 +22,7 @@ spec:
       #     dnsNames:
       #       - "*.${DOMAIN:=ii.nz}"
       #       - "${DOMAIN:=ii.nz}"
+      # https://cert-manager.io/docs/configuration/acme/dns01/
       - dns01:
           rfc2136:
             nameserver: ${RFC2136_TSIG_NAMESERVER:=123.253.176.253}:53
