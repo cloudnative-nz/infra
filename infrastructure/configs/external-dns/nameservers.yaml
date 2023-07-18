@@ -1,4 +1,5 @@
 # https://github.com/kubernetes-sigs/external-dns/blob/master/docs/contributing/crd-source/dnsendpoint-example.yaml
+---
 apiVersion: externaldns.k8s.io/v1alpha1
 kind: DNSEndpoint
 metadata:
@@ -6,7 +7,21 @@ metadata:
   namespace: external-dns
 spec:
   endpoints:
-    - dnsName: "${DOMAIN:=.example.com}"
+    - dnsName: "${DOMAIN:=example.com}"
+      recordTTL: 180
+      recordType: NS
+      targets:
+        - ${PRIMARY_DNS}
+        - ${SECONDARY_DNS}
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: primary-dns
+  namespace: external-dns
+spec:
+  endpoints:
+    - dnsName: "*.${DOMAIN:=example.com}"
       recordTTL: 180
       recordType: NS
       targets:
