@@ -30,6 +30,7 @@ spec:
   # https://github.com/kubernetes-sigs/external-dns/tree/master/charts/external-dns
   # https://github.com/kubernetes-sigs/external-dns/blob/master/charts/external-dns/values.yaml
   values:
+    registry: noop # txt isn't valid with wildcard
     policy: sync
     # The resource types that are queried for endpoints; specify multiple times for multiple sources (required, options: service, ingress, node, fake, connector, gateway-httproute, gateway-grpcroute, gateway-tlsroute, gateway-tcproute, gateway-udproute, istio-gateway, istio-virtualservice, cloudfoundry, contour-httpproxy, gloo-proxy, crd, empty, skipper-routegroup, openshift-route, ambassador-host, kong-tcpingress, f5-virtualserver, traefik-proxy)
     sources:
@@ -37,10 +38,14 @@ spec:
     # We really want to default to rfc2136
     provider: ${EXTERNAL_DNS_PROVIDER:=rfc2136}
     env:
-      - name: CRD_SOURCE_APIVERSION
-        value: externaldns.k8s.io/v1alpha1
-      - name: CRD_SOURCE_KIND
-        value: DNSEndpoint
+      # - name: EXTERNAL_DNS_CRD_SOURCE_APIVERSION
+      #   value: externaldns.k8s.io/v1alpha1
+      # - name: EXTERNAL_DNS_CRD_SOURCE_APIVERSION
+      #   value: externaldns.k8s.io/v1alpha1
+      # - name: EXTERNAL_DNS_CRD_SOURCE_KIND
+      #   value: DNSEndpoint
+      - name: EXETRNAL_DNS_MANAGED_RECORD_TYPES
+        value: "A,AAAA,CNAME,NS"
       - name: EXTERNAL_DNS_RFC2136_PORT
         value: "53"
       - name: EXTERNAL_DNS_RFC2136_HOST
