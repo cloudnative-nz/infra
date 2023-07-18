@@ -25,24 +25,24 @@ spec:
       kind: Deployment
       name: external-dns
       namespace: external-dns
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: config-dns
-  namespace: flux-system
-spec:
-  dependsOn:
-    - name: external-dns
-  interval: 5m
-  path: "./infrastructure/configs/external-dns"
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  postBuild:
-    substitute:
-      DOMAIN: cloudnative.nz
-      PRIMARY_DNS: ns.ii.nz
-      SECONDARY_DNS: ns2.ii.nz
-      EXTERNAL_IP: 123.253.178.101
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: config-dns
+#   namespace: flux-system
+# spec:
+#   dependsOn:
+#     - name: external-dns
+#   interval: 5m
+#   path: "./infrastructure/configs/external-dns"
+#   prune: true
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#   postBuild:
+#     substitute:
+#       DOMAIN: cloudnative.nz
+#       PRIMARY_DNS: ns.ii.nz
+#       SECONDARY_DNS: ns2.ii.nz
+#       EXTERNAL_IP: 123.253.178.101
