@@ -2,12 +2,13 @@
 apiVersion: externaldns.k8s.io/v1alpha1
 kind: DNSEndpoint
 metadata:
-  name: primary-wildcard
+  name: primary-dns
   namespace: external-dns
 spec:
   endpoints:
-    - dnsName: "*.${DOMAIN:=.example.com}"
+    - dnsName: "${DOMAIN:=.example.com}"
       recordTTL: 180
-      recordType: A
+      recordType: NS
       targets:
-        - ${EXTERNAL_IP}
+        - ${PRIMARY_DNS}
+        - ${SECONDARY_DNS}
