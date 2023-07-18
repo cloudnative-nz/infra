@@ -44,8 +44,10 @@ spec:
       #   value: externaldns.k8s.io/v1alpha1
       # - name: EXTERNAL_DNS_CRD_SOURCE_KIND
       #   value: DNSEndpoint
-      - name: EXETRNAL_DNS_MANAGED_RECORD_TYPES
-        value: "A,AAAA,CNAME,NS"
+      #  Not sure how to specify this in ENV vars
+      # ; specifify multiple times to include many
+      # - name: EXETRNAL_DNS_MANAGED_RECORD_TYPES
+      #   value: "A, AAAA, CNAME, NS"
       - name: EXTERNAL_DNS_RFC2136_PORT
         value: "53"
       - name: EXTERNAL_DNS_RFC2136_HOST
@@ -68,55 +70,64 @@ spec:
   # - op: add
   #   path: /spec/template/spec/containers/0/args/-
   #   value: "--rfc2136-port=53"
-  # postRenderers:
-  #   - kustomize:
-  #       patches:
-  #         - target:
-  #             version: v1
-  #             kind: Deployment
-  #             name: external-dns
-  #             namespace: external-dns
-  # ./build/external-dns --help 2>&1
-  # Some of these are mis documented
-  # Note that all flags may be replaced with env vars -
-  # `--flag` -> `EXTERNAL_DNS_FLAG=1` or
-  # `--flag value` -> `EXTERNAL_DNS_FLAG=value`
-  # # TODO: Update docs at https://github.com/kubernetes-sigs/external-dns/blob/master/pkg/apis/externaldns/types.go#L548
-  # # These are used by https://github.com/kubernetes-sigs/external-dns/blob/master/provider/rfc2136/rfc2136.go#L87
-  # patch: |-
-  #   - op: add
-  #     path: /spec/template/spec/containers/0/env
-  #     value: []
-  #   - op: add
-  #     path: /spec/template/spec/containers/0/env/-
-  #     value:
-  #       name: EXTERNAL_DNS_RFC2136_PORT
-  #       value: "53"
-  #   - op: add
-  #     path: /spec/template/spec/containers/0/env/-
-  #     value:
-  #       name: EXTERNAL_DNS_RFC2136_HOST
-  #       value: ${EXTERNAL_DNS_RFC2136_HOST:=1.1.1.1}
-  #   - op: add
-  #     path: /spec/template/spec/containers/0/env/-
-  #     value:
-  #       name: EXTERNAL_DNS_RFC2136_ZONE
-  #       value: ${EXTERNAL_DNS_RFC2136_ZONE:=example.com}
-  #   - op: add
-  #     path: /spec/template/spec/containers/0/env/-
-  #     value:
-  #       name: EXTERNAL_DNS_RFC2136_TSIG_KEYNAME
-  #       value: ${EXTERNAL_DNS_RFC2136_TSIG_KEYNAME:=example.com}
-  #   - op: add
-  #     path: /spec/template/spec/containers/0/env/-
-  #     value:
-  #       name: EXTERNAL_DNS_RFC2136_TSIG_SECRET_ALG
-  #       value: ${EXTERNAL_DNS_RFC2136_TSIG_SECRET_ALG:=hmac-md5}
-  #   - op: add
-  #     path: /spec/template/spec/containers/0/env/-
-  #     value:
-  #       name: EXTERNAL_DNS_RFC2136_TSIG_SECRET
-  #       valueFrom:
-  #         secretKeyRef:
-  #           name: rfc2136
-  #           key: ${EXTERNAL_DNS_RFC2136_TSIG_KEYNAME:=example.com}
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              version: v1
+              kind: Deployment
+              name: external-dns
+              namespace: external-dns
+            patch: |-
+              - op: add
+                path: /spec/template/spec/containers/0/args/-
+                value: "--managed-record-types=A"
+              - op: add
+                path: /spec/template/spec/containers/0/args/-
+                value: "--managed-record-types=AAAA"
+              - op: add
+                path: /spec/template/spec/containers/0/args/-
+                value: "--managed-record-types=CNAME"
+              - op: add
+                path: /spec/template/spec/containers/0/args/-
+                value: "--managed-record-types=NS"
+
+# ./build/external-dns --help 2>&1
+# Some of these are mis documented
+# Note that all flags may be replaced with env vars -
+# `--flag` -> `EXTERNAL_DNS_FLAG=1` or
+# `--flag value` -> `EXTERNAL_DNS_FLAG=value`
+# # TODO: Update docs at https://github.com/kubernetes-sigs/external-dns/blob/master/pkg/apis/externaldns/types.go#L548
+# # These are used by https://github.com/kubernetes-sigs/external-dns/blob/master/provider/rfc2136/rfc2136.go#L87
+# patch: |-
+#   - op: add
+#     path: /spec/template/spec/containers/0/env
+#     value: []
+#   - op: add
+#     path: /spec/template/spec/containers/0/env/-
+#     value:
+#       name: EXTERNAL_DNS_RFC2136_HOST
+#       value: ${EXTERNAL_DNS_RFC2136_HOST:=1.1.1.1}
+#   - op: add
+#     path: /spec/template/spec/containers/0/env/-
+#     value:
+#       name: EXTERNAL_DNS_RFC2136_ZONE
+#       value: ${EXTERNAL_DNS_RFC2136_ZONE:=example.com}
+#   - op: add
+#     path: /spec/template/spec/containers/0/env/-
+#     value:
+#       name: EXTERNAL_DNS_RFC2136_TSIG_KEYNAME
+#       value: ${EXTERNAL_DNS_RFC2136_TSIG_KEYNAME:=example.com}
+#   - op: add
+#     path: /spec/template/spec/containers/0/env/-
+#     value:
+#       name: EXTERNAL_DNS_RFC2136_TSIG_SECRET_ALG
+#       value: ${EXTERNAL_DNS_RFC2136_TSIG_SECRET_ALG:=hmac-md5}
+#   - op: add
+#     path: /spec/template/spec/containers/0/env/-
+#     value:
+#       name: EXTERNAL_DNS_RFC2136_TSIG_SECRET
+#       valueFrom:
+#         secretKeyRef:
+#           name: rfc2136
+#           key: ${EXTERNAL_DNS_RFC2136_TSIG_KEYNAME:=example.com}
