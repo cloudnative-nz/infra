@@ -18,7 +18,7 @@ apiVersion: externaldns.k8s.io/v1alpha1
 kind: DNSEndpoint
 metadata:
   name: wildcard-ns
-  namespace: external-ns
+  namespace: external-dns
 spec:
   endpoints:
     - dnsName: "*.${DOMAIN:=example.com}"
