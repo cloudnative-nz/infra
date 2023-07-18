@@ -30,6 +30,6 @@ spec:
     # https://cert-manager.io/docs/configuration/acme/dns01/#setting-nameservers-for-dns01-self-check
     dns01RecursiveNameservers: "${DNS01_RECURSIVE_NAMESERVERS:=1.1.1.1:53}"
     dns01RecursiveNameserversOnly: "${DNS01_RECURSIVE_NAMESERVERS_ONLY:=true}"
-    logLevel: 4
+    logLevel: 5
     installCRDs: true
   # valuesFrom:
