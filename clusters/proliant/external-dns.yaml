@@ -20,29 +20,27 @@ spec:
       EXTERNAL_DNS_RFC2136_ZONE: cloudnative.nz
       EXTERNAL_DNS_RFC2136_TSIG_KEYNAME: cloudnative.nz
       EXTERNAL_DNS_RFC2136_TSIG_SECRET_ALG: hmac-sha256 # hmac-sha256
-  # healthChecks:
-  #   - apiVersion: apps/v1
-  #     kind: Deployment
-  #     name: cert-manager-cert-manager
-  #     namespace: cert-manager
-# ---
-# apiVersion: kustomize.toolkit.fluxcd.io/v1
-# kind: Kustomization
-# metadata:
-#   name: certificates
-#   namespace: flux-system
-# spec:
-#   dependsOn:
-#     - name: cert-manager
-#   interval: 5m
-#   path: "./infrastructure/configs/cert-manager"
-#   prune: true
-#   sourceRef:
-#     kind: GitRepository
-#     name: flux-system
-#   postBuild:
-#     substitute:
-#       DOMAIN: cloudnative.nz
-#       TSIG_NAMESERVER: 123.253.176.253
-#       TSIG_KEYNAME: cloudnative
-#       TSIG_ALGORITHM: HMACMD5
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: external-dns
+      namespace: external-dns
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: config-dns
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: external-dns
+  interval: 5m
+  path: "./infrastructure/configs/external-dns"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  postBuild:
+    substitute:
+      WILDCARD_DOMAIN: cloudnative.nz
+      WILDCARD_IP: 123.253.178.101

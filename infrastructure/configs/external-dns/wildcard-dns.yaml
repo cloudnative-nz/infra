@@ -2,11 +2,12 @@
 apiVersion: externaldns.k8s.io/v1alpha1
 kind: DNSEndpoint
 metadata:
-  name: domain-wildcard
+  name: primary-wildcard
+  namespace: external-dns
 spec:
   endpoints:
-    - dnsName: "*.ii.cloudnative.nz"
+    - dnsName: "*.${WILDCARD_DOMAIN:=.example.com}"
       recordTTL: 180
       recordType: A
       targets:
-        - 1.1.1.1
+        - ${WILDCARD_IP}
