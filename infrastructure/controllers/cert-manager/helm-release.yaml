@@ -27,5 +27,9 @@ spec:
       interval: 12h
   # https://github.com/cert-manager/cert-manager/blob/master/deploy/charts/cert-manager/values.yaml
   values:
+    # https://cert-manager.io/docs/configuration/acme/dns01/#setting-nameservers-for-dns01-self-check
+    dns01RecursiveNameservers: "${DNS01_RECURSIVE_NAMESERVERS:=1.1.1.1:53}"
+    dns01RecursiveNameserversOnly: "${DNS01_RECURSIVE_NAMESERVERS_ONLY:=true}"
+    logLevel: 4
     installCRDs: true
   # valuesFrom:

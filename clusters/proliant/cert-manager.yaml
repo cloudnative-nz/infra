@@ -18,6 +18,10 @@ spec:
       kind: Deployment
       name: cert-manager
       namespace: cert-manager
+  postbuild:
+    substitute:
+      DNS01_RECURSIVE_NAMESERVERS_ONLY: "true"
+      DNS01_RECURSIVE_NAMESERVERS: 123.253.176.253:53
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -41,5 +45,3 @@ spec:
       RFC2136_NAMESERVER: 123.253.176.253
       RFC2136_TSIG_KEYNAME: cloudnative.nz
       RFC2136_TSIG_ALGORITHM: HMACSHA256
-      DNS01_RECURSIVE_NAMESERVERS_ONLY: "1"
-      DNS01_RECURSIVE_NAMESERVERS: 123.253.176.253:53
