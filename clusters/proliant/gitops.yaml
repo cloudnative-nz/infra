@@ -32,4 +32,4 @@ spec:
       GITOPS_INGRESS_HOST: gitops.cloudnative.nz
       GITOPS_USERNAME: ii
       # echo "$GITOPS_PASSWORD" | gitops get bcrypt-hash
-      GITOPS_PASSWORDHASH: "$2a$10$f0rBmeTMgsziqYGJYqTOa.qsrsrvEFypbgczMFRYVV3pg8xYpWQN2"
+      GITOPS_PASSWORDHASH: "$2a$10$qwaBXMQdRWsabJ7w/4khOOE878zKvNbuuWbzdqxLb1VnFwMHUxUIe"

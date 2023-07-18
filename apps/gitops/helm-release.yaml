@@ -26,5 +26,5 @@ spec:
     adminUser:
       create: true
       username: ${GITOPS_USERNAME:=admin}
-      # echo "$GITOPS_PASSWORD" | gitops get bcrypt-hash
+      # GITOPS_PASSWORDHASH=$(echo "$GITOPS_PASSWORD" | gitops get bcrypt-hash)
       passwordHash: ${GITOPS_PASSWORDHASH:="$2a$10$t8Yfuu9OqLsYAgvY4y81/eW7/hlSPfLkWMum67u/YGUzDzS6Vx/jm"}

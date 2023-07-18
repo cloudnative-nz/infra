@@ -620,6 +620,7 @@ github-receiver   3m47s   True    Receiver initialized for path: /hook/e698be0af
 #+end_example
 *** combine them into something like
 Use the Secret and this PayloadURL to create a new webook:
+[[https://github.com/cloudnative-nz/infra/settings/hooks]]
 [[https://github.com/cloudnative-nz/infra/settings/hooks/new]]
 #+begin_src bash :epilogue "\n) 2>&1\n:\n" :prologue "(\nexport KUBECONFIG\n" :dir . :sync
 echo PayloadURL: https://$(kubectl -n flux-system get ingress webhook-receiver -o jsonpath="{.spec.rules[0].host}")$(kubectl -n flux-system get receiver github-receiver -o jsonpath="{.status.webhookPath}")
