@@ -1,0 +1,12 @@
+# https://github.com/kubernetes-sigs/external-dns/blob/master/docs/contributing/crd-source/dnsendpoint-example.yaml
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: domain-wildcard
+spec:
+  endpoints:
+    - dnsName: "*.ii.cloudnative.nz"
+      recordTTL: 180
+      recordType: A
+      targets:
+        - 1.1.1.1
