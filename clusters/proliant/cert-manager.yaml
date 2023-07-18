@@ -18,7 +18,7 @@ spec:
       kind: Deployment
       name: cert-manager
       namespace: cert-manager
-  postbuild:
+  postBuild:
     substitute:
       DNS01_RECURSIVE_NAMESERVERS_ONLY: "true"
       DNS01_RECURSIVE_NAMESERVERS: 123.253.176.253:53
