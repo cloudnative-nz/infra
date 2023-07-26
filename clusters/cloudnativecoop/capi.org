@@ -65,3 +65,10 @@ clusterctl generate cluster cloudnativecoop \
   --control-plane-machine-count=1 \
   --worker-machine-count=0 > ./clusters/proliant/capi/cloudnativecoop.yaml
 #+end_src
+* another cluster
+#+begin_src tmux
+clusterctl generate cluster sharingio \
+  --kubernetes-version v1.27.3 \
+  --control-plane-machine-count=1 \
+  --worker-machine-count=0 > ../proliant/capi/sharingio.yaml
+#+end_src
