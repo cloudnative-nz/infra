@@ -1,0 +1,67 @@
+#+title: Capi
+
+* Directions
+https://cluster-api.sigs.k8s.io/user/quick-start.html
+* ssh to host with cluster access
+#+begin_src tmux
+ssh root@k8s.cloudnative.nz
+#+end_src
+* Install clusterctl
+#+begin_src tmux
+brew install clusterctl
+#+end_src
+OR
+#+begin_src tmux
+curl -L https://github.com/kubernetes-sigs/cluster-api/releases/download/v1.4.4/clusterctl-linux-amd64 -o clusterctl
+sudo install -o root -g root -m 0755 clusterctl /usr/local/bin/clusterctl
+#+end_src
+* .envrc
+#+begin_src bash
+export CLUSTER_TOPOLOGY=true
+# https://console.equinix.com/projects/82b5c425-8dd4-429e-ae0d-d32f265c63e4/api-keys
+export METAL_AUTH_TOKEN=XXXX
+export PACKET_API_KEY=$METAL_AUTH_TOKEN
+# Required (made up examples shown)
+# The project where your cluster will be placed to.
+# You have to get one from the Equinix Metal Console if you don't have one already.
+# https://console.equinix.com/projects/82b5c425-8dd4-429e-ae0d-d32f265c63e4/general
+export METAL_PROJECT_ID=0c218738-18c0-47b5-a404-beb59d9c6585
+export PROJECT_ID=$METAL_PROJECT_ID
+# This can help to take advantage of automated, interconnected bare metal across our global metros.
+export METRO="ld"
+# What plan to use for your control plane nodes
+export CONTROLPLANE_NODE_TYPE="m3.large.x86"
+# What plan to use for your worker nodes
+export WORKER_NODE_TYPE="m3.large.x86"
+# The ssh key you would like to have access to the nodes
+export SSH_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAgEAsUXHYuDzE6fs2KkCj91qSqpMXyxozb9gDKcx3mlh87hCegevld75gQAhujVYGRgJLsdf7W0/lX81clCRP1FjbaYYrPkVWGR291U6K5rkL9kZqd9dC0h9iCvFTKdKC7sA/uaolFPWav3QFWdEp3geNNuAm/NKSckUs9yGgr1inANQNsHFl0JFzU34D2Kt43rKA0Qz3kkDKCnXzl+wltIKq5f1SH1HDlv0hoLgikVwg5CLLKCsZ8IFuxur1pdb26uM0vtFp2LJUNad6hK8RsU6p/NeTtOLjbKGsLkqCgSvoPxCAIbFKWIRuAfGd6CrNc2kAD4qM45jAvI9dLuzbopVfhXS16F0i3EzL8/VWuCk7l2mYRdjHAy+9fJksx1zx2wfeEXSoSUX8/ROxpWZaDA8gLAxUrp/hqHU351QDDEdunMfmlrGc6ixyIaxMugRuNsNB4eY91mmbiljeoSCs1GFbVRhC8KejdKpo266hSDdS7f1sV9dnxVhHBhCxWzN7+mfk4KzpjEVFoDR73X8IUOLGFikORl918i86bH2uqJ5zZLvOA4a0BqaRIExmAi7wQrm4iLcDH3THMpvEuy4965JZz1uPJYtGBD/Zj1O2sMA8K6zvSB/8q86fe1VdwIJxOHh50HqAH1jPHHfkxIdrL4nBmvF9Pkzpg/OWlyVjqWmWj0= hh"
+export CLUSTER_NAME="cloudnativecoop"
+
+# Optional (defaults shown)
+export NODE_OS="ubuntu_22_04"
+export POD_CIDR="192.168.0.0/16"
+export SERVICE_CIDR="172.26.0.0/16"
+# Only relevant if using the kube-vip flavor
+export KUBE_VIP_VERSION="v0.5.0"
+#+end_src
+* ensure communication with correct cluster
+#+begin_src tmux
+kubectl get nodes
+#+end_src
+* Install clusterctl
+#+name: packet_api_key
+#+begin_src shell :results silent
+echo -n $PACKET_API_KEY
+#+end_src
+
+#+begin_src tmux :noweb yes
+export PACKET_API_KEY=<<packet_api_key()>>
+clusterctl init --infrastructure packet
+#+end_src
+* create cluster yaml
+#+begin_src tmux
+clusterctl generate cluster cloudnativecoop \
+  --kubernetes-version v1.27.3 \
+  --control-plane-machine-count=1 \
+  --worker-machine-count=0 > cloudnativcoop.yaml
+#+end_src
