@@ -1,0 +1,385 @@
+#+title: Coop Mode
+#+AUTHOR: Hippie Hacker
+#+EMAIL: hh@ii.coop
+#+DATE: 3th of July, 2023
+#+CREATOR: ii.coop
+#+PROPERTY: header-args:tmux :session ":default"
+#+PROPERTY: header-args:shell :exports both
+#+PROPERTY: header-args:shell+ :async true
+#+PROPERTY: header-args:shell+ :eval no-export
+#+PROPERTY: header-args:shell+ :prologue "exec 2>&1\nexport CODER_CONFIG_DIR KUBECONFIG"
+#+PROPERTY: header-args:shell+ :epilogue ":\n"
+#+PROPERTY: header-args:shell+ :var HEADING=(nth 4 (org-heading-components))
+#+PROPERTY: no-header-args:tmux+ :session (concat ":" (nth 4 (org-heading-components)))
+#+NOSTARTUP: content
+* Deployments
+** ii@cloudnative.nz
+:PROPERTIES:
+:header-args:shell+: :var KUBECONFIG=(concat (getenv "HOME") "/.kube/config-cloudnative.nz")
+:header-args:shell+: :var CODER_CONFIG_DIR=(concat (getenv "HOME") "/.config/space.cloudnative.nz")
+# :header-args:tmux+: :session (concat "cloudnative_nz:" (nth 4 (org-heading-components)))
+:header-args:tmux+: :session ":iinz"
+:END:
+*** ssh
+#+begin_src tmux
+ssh root@k8s.cloudnative.nz
+#+end_src
+*** root@cloudnative.nz
+**** get nodes
+#+begin_src tmux
+kubectl get nodes
+#+end_src
+**** check namespaces
+#+begin_src tmux
+kubectl get ns | grep -v system\\\|cert-manager\\\|coder\\\|default\\\|cilium-secret\\\|ingress-nginx\\\|kube-
+#+end_src
+**** check pods
+#+begin_src tmux
+kubectl get pods -A | grep -v system\\\|manager\\\|coder\\\|default\\\|rook-ceph\\\|powerdns\\\|ingress-ngnix
+#+end_src
+*** space.cloudnative.nz
+**** coder login
+#+begin_src tmux
+coder login https://space.cloudnative.nz
+#+end_src
+**** check spaces
+#+begin_src tmux
+coder list -a
+#+end_src
+**** delete stopped spaces
+#+begin_src tmux
+space list -a --search status:Stopped | grep / | awk '{print $1}' | xargs -n 1 -P 50 coder delete -y
+#+end_src
+**** delete failed spaces
+We orphan them as well... it's possible that we leave around some resources.
+#+begin_src shell
+space list -a --search status:Failed | grep / | awk '{print $1}' | xargs -n 1 -P 50 coder delete -y --orphan
+#+end_src
+** hh@Paris
+:PROPERTIES:
+:header-args:shell+: :var KUBECONFIG=(concat (getenv "HOME") "/.kube/config-sharing.io")
+:header-args:shell+: :var CODER_CONFIG_DIR=(concat (getenv "HOME") "/.config/space.sharing.io")
+:header-args:tmux+: :session ":cnnz"
+:END:
+*** Lenovo P70
+**** get nodes
+#+begin_src shell :sync
+kubectl get nodes
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAME              STATUS   ROLES           AGE   VERSION
+ii-thinkpad-p70   Ready    control-plane   13d   v1.27.4
+#+end_example
+
+**** check namespaces
+#+begin_src shell
+kubectl get ns | grep -v system\\\|cert-manager\\\|coder\\\|default\\\|cilium-secret\\\|ingress-nginx\\\|kube-
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAME              STATUS   AGE
+ghost             Active   10d
+gitops-run        Active   11d
+ii                Active   11d
+longhorn          Active   11d
+#+end_example
+
+**** check pods
+#+begin_src shell :async true
+kubectl get pods -A | grep -v system\\\|manager\\\|coder\\\|default\\\|longhorn
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAMESPACE        NAME                                                      READY   STATUS      RESTARTS         AGE
+ghost            ghost-7846674cb4-jktvd                                    1/1     Running     0                4d12h
+ghost            ghost-mysql-0                                             1/1     Running     1 (4d11h ago)    10d
+gitops-run       fluent-bit-bwl98                                          1/1     Running     1 (4d11h ago)    11d
+gitops-run       run-dev-bucket-88fc98f8b-9mlqj                            1/1     Running     1 (4d11h ago)    11d
+ingress-nginx    ingress-nginx-ingress-nginx-controller-5fd5f4c6c8-x8p8j   1/1     Running     1 (4d11h ago)    11d
+#+end_example
+
+**** check coder pods
+#+begin_src shell :async true
+kubectl get pods -n coder
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAME                          READY   STATUS    RESTARTS   AGE
+coder-77f879bb8c-f7z59        1/1     Running   0          71m
+coder-coder-db-postgresql-0   1/1     Running   0          4d11h
+#+end_example
+
+*** space.sharing.io
+**** coder login
+#+begin_src tmux :session ":coder"
+export CODER_CONFIG_DIR=$HOME/.config/space.sharing.io
+coder login https://space.sharing.io
+#+end_src
+**** check spaces
+#+begin_src shell
+space list -a
+#+end_src
+
+#+RESULTS:
+#+begin_example
+WORKSPACE  TEMPLATE  STATUS  HEALTHY  LAST BUILT  OUTDATED  STARTS AT  STOPS AFTER
+hh/wed943  iipod     Failed           1h2m        false     -          1d
+#+end_example
+
+**** delete stopped spaces
+#+begin_src tmux
+space list -a --search status:Stopped | grep / | awk '{print $1}' | xargs -n 1 -P 50 coder delete -y
+#+end_src
+**** delete failed spaces
+We orphan them as well... it's possible that we leave around some resources.
+#+begin_src shell
+space list -a --search status:Failed | grep / | awk '{print $1}' | xargs -n 1 -P 50 coder delete -y --orphan
+#+end_src
+
+#+RESULTS:
+#+begin_example
+> No workspaces found! Create one:
+
+   coder create <name>
+
+#+end_example
+
+** heyste@FOP
+:PROPERTIES:
+:header-args:shell+: :var KUBECONFIG=(concat (getenv "HOME") "/.kube/config-fop")
+:header-args:shell+: :var CODER_CONFIG_DIR=(concat (getenv "HOME") "/.config/coder.ii.nz")
+:header-args:tmux+: :session ":iinz"
+:END:
+*** admin@fop
+**** ssh
+#+begin_src tmux
+ssh root@gateway.fop.nz
+#+end_src
+**** get nodes
+#+begin_src tmux
+kubectl get nodes
+#+end_src
+
+**** check namespaces
+#+begin_src tmux
+kubectl get ns | grep -v system\\\|cert-manager\\\|coder\\\|default\\\|cilium-secret\\\|ingress-nginx\\\|kube-
+#+end_src
+
+**** check pods
+#+begin_src tmux
+kubectl get pods -A | grep -v system\\\|manager\\\|coder\\\|default\\\|rook-ceph\\\|powerdns\\\|ingress-ngnix
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAMESPACE        NAME                                               READY   STATUS                       RESTARTS       AGE
+authentik        authentik-postgresql-0                             1/1     Running                      1 (32d ago)    50d
+authentik        authentik-redis-master-0                           1/1     Running                      1 (32d ago)    50d
+authentik        authentik-server-6d8f7d6bbc-ltbmz                  1/1     Running                      6 (32d ago)    50d
+authentik        authentik-worker-5bdbc69bd7-6dkzz                  1/1     Running                      1 (32d ago)    50d
+cilium-test      client-6f6788d7cc-dkv5k                            1/1     Running                      1 (32d ago)    50d
+cilium-test      client2-bc59f56d5-lrkjq                            1/1     Running                      1 (32d ago)    50d
+cilium-test      echo-other-node-76cd85f7f4-pchw2                   2/2     Running                      2 (32d ago)    50d
+cilium-test      echo-same-node-b6bf578f6-5b6kd                     2/2     Running                      2 (32d ago)    50d
+ii-nz            ii-nz-website-5c454f7f48-mswpt                     1/1     Running                      0              29d
+ii-nz            reveal-multiplex-65f9565fc6-9hlk7                  1/1     Running                      1 (32d ago)    50d
+ingress-nginx    ingress-nginx-controller-85b8dc988c-wh2lg          1/1     Running                      0              31d
+nixery           nixery-7868986c9b-j8h2r                            1/1     Running                      1 (32d ago)    37d
+scratch-ii-nz    scratch-website-67d7bfd587-glxf2                   0/1     CreateContainerConfigError   0              31d
+tmp              tmp-website-bbc55786b-q4djg                        0/1     CreateContainerConfigError   0              30d
+#+end_example
+
+*** coder.ii.nz
+**** coder login
+#+begin_src tmux
+export CODER_CONFIG_DIR=$HOME/.config/coder.ii.nz
+coder login https://coder.ii.nz
+#+end_src
+**** check spaces
+#+begin_src shell
+space list -a
+#+end_src
+
+#+RESULTS:
+#+begin_example
+check versions error: build info: unexpected status code 503: unexpected non-JSON response "text/html"
+	Error: <html>
+<head><title>503 Service Temporarily Unavailable</title></head>
+<body>
+<center><h1>503 Service Temporarily Unavailable</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>
+
+unexpected non-JSON response "text/html"
+#+end_example
+
+** testing
+:PROPERTIES:
+:header-args:shell+: :var KUBECONFIG=(concat (getenv "HOME") "/.kube/config-cloudnative.nz")
+:header-args:shell+: :var CODER_CONFIG_DIR=(concat (getenv "HOME") "/.config/space.cloudnative.nz")
+:header-args:tmux+: :session (concat ":" (nth 4 (org-heading-components)))
+:END:
+*** ssh
+#+begin_src tmux
+this should be the ssh thingy
+#+end_src
+** jaoeu
+** cloudnative.coop
+:PROPERTIES:
+:header-args:shell+: :var KUBECONFIG="/Users/hh/.kube/config-sharing.io"
+:header-args:shell+: :var CODER_CONFIG_DIR="/Users/hh/.config/coder.cloudnative.coop"
+:header-args:tmux+: :session ":cnnz"
+:END:
+*** Equinix project
+https://console.equinix.com/projects/f4a7273d-b1fc-4c50-93e8-7fed753c86ff
+**** device list
+#+begin_src tmux
+metal device list
+#+end_src
+**** c3.small.x86 availablity
+#+begin_src shell
+metal capacity check -m pa,ld,fr,ny,sv,ty,da,sy,dc -P c3.small.x86 -q 1
+#+end_src
+
+#+RESULTS:
+#+begin_example
++-------+--------------+----------+--------------+
+| METRO |     PLAN     | QUANTITY | AVAILABILITY |
++-------+--------------+----------+--------------+
+| pa    | c3.small.x86 | 1        | false        |
+| ld    | c3.small.x86 | 1        | false        |
+| fr    | c3.small.x86 | 1        | true         |
+| ny    | c3.small.x86 | 1        | true         |
+| sv    | c3.small.x86 | 1        | true         |
+| ty    | c3.small.x86 | 1        | true         |
+| da    | c3.small.x86 | 1        | true         |
+| sy    | c3.small.x86 | 1        | true         |
+| dc    | c3.small.x86 | 1        | true         |
++-------+--------------+----------+--------------+
+#+end_example
+
+**** c3.medium.x86 availablity
+#+begin_src shell
+metal capacity check -m pa,ld,fr,ny,sv,ty,da,sy,dc -P c3.medium.x86 -q 1
+#+end_src
+
+#+RESULTS:
+#+begin_example
++-------+---------------+----------+--------------+
+| METRO |     PLAN      | QUANTITY | AVAILABILITY |
++-------+---------------+----------+--------------+
+| pa    | c3.medium.x86 | 1        | true         |
+| ld    | c3.medium.x86 | 1        | true         |
+| fr    | c3.medium.x86 | 1        | true         |
+| ny    | c3.medium.x86 | 1        | true         |
+| sv    | c3.medium.x86 | 1        | true         |
+| ty    | c3.medium.x86 | 1        | true         |
+| da    | c3.medium.x86 | 1        | true         |
+| sy    | c3.medium.x86 | 1        | true         |
+| dc    | c3.medium.x86 | 1        | true         |
++-------+---------------+----------+--------------+
+#+end_example
+
+**** m3.large.x86 availablity
+#+begin_src shell
+metal capacity check -m pa,ld,fr,ny,sv,ty,da,sy,dc -P m3.large.x86 -q 1
+#+end_src
+
+#+RESULTS:
+#+begin_example
++-------+--------------+----------+--------------+
+| METRO |     PLAN     | QUANTITY | AVAILABILITY |
++-------+--------------+----------+--------------+
+| pa    | m3.large.x86 | 1        | true         |
+| ld    | m3.large.x86 | 1        | true         |
+| fr    | m3.large.x86 | 1        | true         |
+| ny    | m3.large.x86 | 1        | true         |
+| sv    | m3.large.x86 | 1        | true         |
+| ty    | m3.large.x86 | 1        | true         |
+| da    | m3.large.x86 | 1        | true         |
+| sy    | m3.large.x86 | 1        | true         |
+| dc    | m3.large.x86 | 1        | true         |
++-------+--------------+----------+--------------+
+#+end_example
+
+*** coder.cloudnative.coop
+:PROPERTIES:
+:END:
+**** coder login
+#+begin_src tmux :session ":coder"
+export CODER_CONFIG_DIR=$HOME/.config/coder.cloudnative.coop
+coder login https://coder.cloudnative.coop
+#+end_src
+**** check spaces
+#+begin_src shell
+space list -a
+#+end_src
+
+#+RESULTS:
+#+begin_example
+version mismatch: client v0.24.1+2c843f4, server v0.23.7+a903d7c
+download the server version with: 'curl -L https://coder.com/install.sh | sh -s -- --version 0.23.7'
+> No workspaces found! Create one:
+
+   coder create <name>
+
+#+end_example
+
+**** delete stopped spaces
+#+begin_src shell
+space list -a --search status:Stopped | grep / | awk '{print $1}' | xargs -n 1 -P 50 coder delete -y
+#+end_src
+
+* FEATURES
+** queue
+*** TODO delete results for region
+*** TODO update fop.nz cluster with newer flux api version
+*** TODO SQL Mode startup should not ask questions
+*** TODO Add Buttons for code block navigation and execution
+*** TODO emacs TAB tied to yas snippet issue (breaks EVERYTHING)
+*** TODO emacs dired isn't working
+*** TODO DNS for fop deployments of iipod not working
+*** TODO update infrasnoop yaml to not need flux?
+** done
+*** DONE remove newlines in queries
+*** DONE update config to use doom-dracula
+*** DONE retain acme-registration + key
+- Reached out to ben@coder.com
+** next
+*** WAIT iipod-vcluster
+We need to be able to create clusters with different options (within one larger box for scaling)
+https://github.com/sharingio/coder/blob/main/examples/templates/vcluster/cluster.tf
+*** WAIT iipod-kubevirt
+This will allow for docker/containerd isolation
+*** HOLD Coder Upstream
+*** HOLD iinix
+A nixery deployment at nixery.ii.nz in cluster for now
+**** TODO Configured with a NIXERY_PKGS_REPO
+with overlays making some changes to existing packages,
+but allowing fall through for all other nix pkgs.
+- This will avoid the complexity of Dockerfiles, build, push, pull process
+- nixery.ii.nz/iipod/other/this@1.2/that@1.5 should be possible to change on the web form
+**** TODO Nixery.org
+:PROPERTIES:
+:ID:       32c7405f-c7ff-4a8f-8807-efc29fbaed2b
+:END:
+[[file:Downloads/fop-ii-nixery-v2.yaml::---][./Downloads/fop-ii-nixery-v2.yaml]]
+*** HOLD Eclipse Theia
+https://eclipsesource.com/blogs/2022/03/09/eclipse-theia-is-the-next-generation-eclipse-platform-for-ides-and-tools/
+*** HOLD MOTD
+Cloud Native MOTD Service ATOM XML feed, projects could submit via yaml different things to the MOTD service.
+The genisis of this idea was k8s.gcr.io going away and we couldn't reach all our users.
+We can email, tweet, blog, and it doesn't matter we aren't gonig to reach all of them.
+MOTD Banners?
+When kubelet comes up, it going into a log file etc
+Migth solve a bunch of issues, consumption model is web
+Put in user-agent project and current version
+https://github.com/jeefy/cnmotd
+
+* Footnotes
