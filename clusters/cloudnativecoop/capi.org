@@ -63,5 +63,5 @@ clusterctl init --infrastructure packet
 clusterctl generate cluster cloudnativecoop \
   --kubernetes-version v1.27.3 \
   --control-plane-machine-count=1 \
-  --worker-machine-count=0 > cloudnativcoop.yaml
+  --worker-machine-count=0 > ./clusters/proliant/capi/cloudnativecoop.yaml
 #+end_src
