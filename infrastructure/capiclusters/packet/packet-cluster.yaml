@@ -1,0 +1,9 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: PacketCluster
+metadata:
+  name: ${cluster_name:=sharingio}
+  namespace: ${namespace:=default}
+spec:
+  metro: ${metal_metro:=ld}
+  projectID: ${metal_project_id:=0c218738-18c0-47b5-a404-beb59d9c6585}
+  vipManager: CPEM

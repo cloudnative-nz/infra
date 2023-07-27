@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - cluster.yaml
+  - kubeadm-controlplane.yaml
+  - kubeadm-worker.yaml
+  - machinedeployment-worker.yaml
+  - packet-cluster.yaml
+  - packetmachine-template-cp.yaml
+  - packetmachine-template-worker.yaml
