@@ -17,16 +17,6 @@ sudo install -o root -g root -m 0755 clusterctl /usr/local/bin/clusterctl
 #+end_src
 * .envrc
 #+begin_src bash
-export CLUSTER_TOPOLOGY=true
-# https://console.equinix.com/projects/82b5c425-8dd4-429e-ae0d-d32f265c63e4/api-keys
-export METAL_AUTH_TOKEN=XXXX
-export PACKET_API_KEY=$METAL_AUTH_TOKEN
-# Required (made up examples shown)
-# The project where your cluster will be placed to.
-# You have to get one from the Equinix Metal Console if you don't have one already.
-# https://console.equinix.com/projects/82b5c425-8dd4-429e-ae0d-d32f265c63e4/general
-export METAL_PROJECT_ID=0c218738-18c0-47b5-a404-beb59d9c6585
-export PROJECT_ID=$METAL_PROJECT_ID
 # This can help to take advantage of automated, interconnected bare metal across our global metros.
 export METRO="ld"
 # What plan to use for your control plane nodes
@@ -43,11 +33,44 @@ export POD_CIDR="192.168.0.0/16"
 export SERVICE_CIDR="172.26.0.0/16"
 # Only relevant if using the kube-vip flavor
 export KUBE_VIP_VERSION="v0.5.0"
+
+# https://console.equinix.com/projects/82b5c425-8dd4-429e-ae0d-d32f265c63e4/api-keys
+# Required (made up examples shown)
+# The project where your cluster will be placed to.
+# You have to get one from the Equinix Metal Console if you don't have one already.
+# cloudnative.coop https://console.equinix.com/projects/f4a7273d-b1fc-4c50-93e8-7fed753c86ff
+# sharing.io https://console.equinix.com/projects/82b5c425-8dd4-429e-ae0d-d32f265c63e4/general
+# cloudnative.nz https://console.equinix.com/projects/0c218738-18c0-47b5-a404-beb59d9c6585
+# Following generated via :
+# ( metal env -o capp      | sed s:^:export\ :
+#   metal env -o sh        | grep -v METAL_CONFIG | sed s:^:export\ :
+#   metal env -o terraform | grep -v metal_config | sed s:^:export\ :
+# ) >> .envrc
+# https://deploy.equinix.com/developers/docs/metal/libraries/cli/
+export PACKET_API_KEY=
+export ORGANIZATION_ID=670f523c-7a91-4757-b152-a2160ca4c807
+export PROJECT_ID=f4a7273d-b1fc-4c50-93e8-7fed753c86ff
+export METAL_AUTH_TOKEN=
+export METAL_ORGANIZATION_ID=670f523c-7a91-4757-b152-a2160ca4c807
+export METAL_PROJECT_ID=f4a7273d-b1fc-4c50-93e8-7fed753c86ff
+export TF_VAR_metal_organization_id=670f523c-7a91-4757-b152-a2160ca4c807
+export TF_VAR_metal_project_id=f4a7273d-b1fc-4c50-93e8-7fed753c86ff
+export TF_VAR_metal_auth_token=
 #+end_src
 * ensure communication with correct cluster
 #+begin_src tmux
 kubectl get nodes
 #+end_src
+* metal cli/api
+The metal cli, CAPI Provider, and Terraform Provider all use different environment variables to drive them.
+#+begin_src shell :results silent
+(
+metal env -o capp | sed s:^:export\ :
+metal env -o sh | grep -v METAL_CONFIG | sed s:^:export\ :
+metal env -o terraform | grep -v metal_config | sed s:^:export\ :
+) >> .envrc
+#+end_src
+
 * Install clusterctl
 #+name: packet_api_key
 #+begin_src shell :results silent
@@ -71,4 +94,12 @@ clusterctl generate cluster sharingio \
   --kubernetes-version v1.27.3 \
   --control-plane-machine-count=1 \
   --worker-machine-count=0 > ../proliant/capi/sharingio.yaml
+#+end_src
+* using clusterctl to get kubeconfig
+#+begin_src tmux
+clusterctl get kubeconfig sharingio > /tmp/config-sharingio
+#+end_src
+* scp cluster kubeconfig to box
+#+begin_src tmux
+scp root@cloudnative.nz:/tmp/config-sharingio ~/.kube/config-sharingio
 #+end_src

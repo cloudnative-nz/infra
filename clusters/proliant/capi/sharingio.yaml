@@ -4,6 +4,13 @@ metadata:
   name: sharingio-control-plane
   namespace: default
 spec:
+  version: v1.27.3
+  replicas: 1
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: PacketMachineTemplate
+      name: sharingio-control-plane
   kubeadmConfigSpec:
     clusterConfiguration:
       apiServer:
@@ -24,27 +31,6 @@ spec:
         kubeletExtraArgs:
           cloud-provider: external
           provider-id: equinixmetal://{{ `{{ v1.instance_id }}` }}
-    postKubeadmCommands:
-      - |
-        cat <<EOF >> /etc/network/interfaces
-        auto lo:0
-        iface lo:0 inet static
-          address {{ .controlPlaneEndpoint }}
-          netmask 255.255.255.255
-        EOF
-        systemctl restart networking
-        mkdir -p $HOME/.kube
-        cp /etc/kubernetes/admin.conf $HOME/.kube/config
-        echo "source <(kubectl completion bash)" >> $HOME/.bashrc
-        echo "alias k=kubectl" >> $HOME/.bashrc
-        echo "complete -o default -F __start_kubectl k" >> $HOME/.bashrc
-        if [ -f "/run/kubeadm/kubeadm.yaml" ]; then
-          export KUBECONFIG=/etc/kubernetes/admin.conf
-          export CPEM_YAML=https://github.com/equinix/cloud-provider-equinix-metal/releases/download/v3.6.1/deployment.yaml
-          export SECRET_DATA='cloud-sa.json=''{"apiKey": "{{ .apiKey }}","projectID": "0c218738-18c0-47b5-a404-beb59d9c6585", "eipTag": "cluster-api-provider-packet:cluster-id:sharingio", "eipHealthCheckUseHostIP": true}'''
-          kubectl create secret generic -n kube-system metal-cloud-config --from-literal="${SECRET_DATA}" || (sleep 1 && kubectl create secret generic -n kube-system metal-cloud-config --from-literal="${SECRET_DATA}") || (sleep 1 && kubectl create secret generic -n kube-system metal-cloud-config --from-literal="${SECRET_DATA}")
-          kubectl apply -f ${CPEM_YAML} || (sleep 1 && kubectl apply -f ${CPEM_YAML}) || (sleep 1 && kubectl apply -f ${CPEM_YAML})
-        fi
     preKubeadmCommands:
       - |
         sed -ri '/\sswap\s/s/^#?/#/' /etc/fstab
@@ -90,13 +76,27 @@ spec:
         sed -i "s,sandbox_image.*$,sandbox_image = \"$(kubeadm config images list | grep pause | sort -r | head -n1)\"," /etc/containerd/config.toml
         systemctl restart containerd
         ping -c 3 -q {{ .controlPlaneEndpoint }} && echo OK || ip addr add {{ .controlPlaneEndpoint }} dev lo
-  machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-      kind: PacketMachineTemplate
-      name: sharingio-control-plane
-  replicas: 1
-  version: v1.27.3
+    postKubeadmCommands:
+      - |
+        cat <<EOF >> /etc/network/interfaces
+        auto lo:0
+        iface lo:0 inet static
+          address {{ .controlPlaneEndpoint }}
+          netmask 255.255.255.255
+        EOF
+        systemctl restart networking
+        mkdir -p $HOME/.kube
+        cp /etc/kubernetes/admin.conf $HOME/.kube/config
+        echo "source <(kubectl completion bash)" >> $HOME/.bashrc
+        echo "alias k=kubectl" >> $HOME/.bashrc
+        echo "complete -o default -F __start_kubectl k" >> $HOME/.bashrc
+        if [ -f "/run/kubeadm/kubeadm.yaml" ]; then
+          export KUBECONFIG=/etc/kubernetes/admin.conf
+          export CPEM_YAML=https://github.com/equinix/cloud-provider-equinix-metal/releases/download/v3.6.1/deployment.yaml
+          export SECRET_DATA='cloud-sa.json=''{"apiKey": "{{ .apiKey }}","projectID": "0c218738-18c0-47b5-a404-beb59d9c6585", "eipTag": "cluster-api-provider-packet:cluster-id:sharingio", "eipHealthCheckUseHostIP": true}'''
+          kubectl create secret generic -n kube-system metal-cloud-config --from-literal="${SECRET_DATA}" || (sleep 1 && kubectl create secret generic -n kube-system metal-cloud-config --from-literal="${SECRET_DATA}") || (sleep 1 && kubectl create secret generic -n kube-system metal-cloud-config --from-literal="${SECRET_DATA}")
+          kubectl apply -f ${CPEM_YAML} || (sleep 1 && kubectl apply -f ${CPEM_YAML}) || (sleep 1 && kubectl apply -f ${CPEM_YAML})
+        fi
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: PacketMachineTemplate
@@ -106,13 +106,13 @@ metadata:
 spec:
   template:
     spec:
-      billingCycle: hourly
       machineType: m3.large.x86
       os: ubuntu_22_04
+      billingCycle: hourly
+      tags: []
       sshKeys:
         - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAgEAsUXHYuDzE6fs2KkCj91qSqpMXyxozb9gDKcx3mlh87hCegevld75gQAhujVYGRgJLsdf7W0/lX81clCRP1FjbaYYrPkVWGR291U6K5rkL9kZqd9dC0h9iCvFTKdKC7sA/uaolFPWav3QFWdEp3geNNuAm/NKSckUs9yGgr1inANQNsHFl0JFzU34D2Kt43rKA0Qz3kkDKCnXzl+wltIKq5f1SH1HDlv0hoLgikVwg5CLLKCsZ8IFuxur1pdb26uM0vtFp2LJUNad6hK8RsU6p/NeTtOLjbKGsLkqCgSvoPxCAIbFKWIRuAfGd6CrNc2kAD4qM45jAvI9dLuzbopVfhXS16F0i3EzL8/VWuCk7l2mYRdjHAy+9fJksx1zx2wfeEXSoSUX8/ROxpWZaDA8gLAxUrp/hqHU351QDDEdunMfmlrGc6ixyIaxMugRuNsNB4eY91mmbiljeoSCs1GFbVRhC8KejdKpo266hSDdS7f1sV9dnxVhHBhCxWzN7+mfk4KzpjEVFoDR73X8IUOLGFikORl918i86bH2uqJ5zZLvOA4a0BqaRIExmAi7wQrm4iLcDH3THMpvEuy4965JZz1uPJYtGBD/Zj1O2sMA8K6zvSB/8q86fe1VdwIJxOHh50HqAH1jPHHfkxIdrL4nBmvF9Pkzpg/OWlyVjqWmWj0=
           hh
-      tags: []
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
@@ -149,11 +149,11 @@ spec:
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
+  name: sharingio-worker-a
+  namespace: default
   labels:
     cluster.x-k8s.io/cluster-name: sharingio
     pool: worker-a
-  name: sharingio-worker-a
-  namespace: default
 spec:
   clusterName: sharingio
   replicas: 0
@@ -167,17 +167,17 @@ spec:
         cluster.x-k8s.io/cluster-name: sharingio
         pool: worker-a
     spec:
+      clusterName: sharingio
+      version: v1.27.3
       bootstrap:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
           name: sharingio-worker-a
-      clusterName: sharingio
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: PacketMachineTemplate
         name: sharingio-worker-a
-      version: v1.27.3
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: PacketMachineTemplate
@@ -190,10 +190,10 @@ spec:
       billingCycle: hourly
       machineType: m3.large.x86
       os: ubuntu_22_04
+      tags: []
       sshKeys:
         - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAgEAsUXHYuDzE6fs2KkCj91qSqpMXyxozb9gDKcx3mlh87hCegevld75gQAhujVYGRgJLsdf7W0/lX81clCRP1FjbaYYrPkVWGR291U6K5rkL9kZqd9dC0h9iCvFTKdKC7sA/uaolFPWav3QFWdEp3geNNuAm/NKSckUs9yGgr1inANQNsHFl0JFzU34D2Kt43rKA0Qz3kkDKCnXzl+wltIKq5f1SH1HDlv0hoLgikVwg5CLLKCsZ8IFuxur1pdb26uM0vtFp2LJUNad6hK8RsU6p/NeTtOLjbKGsLkqCgSvoPxCAIbFKWIRuAfGd6CrNc2kAD4qM45jAvI9dLuzbopVfhXS16F0i3EzL8/VWuCk7l2mYRdjHAy+9fJksx1zx2wfeEXSoSUX8/ROxpWZaDA8gLAxUrp/hqHU351QDDEdunMfmlrGc6ixyIaxMugRuNsNB4eY91mmbiljeoSCs1GFbVRhC8KejdKpo266hSDdS7f1sV9dnxVhHBhCxWzN7+mfk4KzpjEVFoDR73X8IUOLGFikORl918i86bH2uqJ5zZLvOA4a0BqaRIExmAi7wQrm4iLcDH3THMpvEuy4965JZz1uPJYtGBD/Zj1O2sMA8K6zvSB/8q86fe1VdwIJxOHh50HqAH1jPHHfkxIdrL4nBmvF9Pkzpg/OWlyVjqWmWj0=
           hh
-      tags: []
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
