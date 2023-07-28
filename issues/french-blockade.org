@@ -1,0 +1,217 @@
+#+title: Kubeconfig Deepdive
+
+* issue
+
+The French internet provider Orange seems to block outbound TCP connections to quite a few ports... it's a strange practice, but I've seen it before.
+#+begin_src shell
+(
+kubectl --request-timeout=2s version
+) 2>&1 | grep unreachable\\\|Unable
+:
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I0728 08:17:29.438592   77448 versioner.go:56] Remote kubernetes server unreachable
+Unable to connect to the server: context deadline exceeded
+#+end_example
+
+* inspect kubectl KUBECONFIG clusters
+
+My config only hase one cluster, so we look at the first one. In particular what protocol, port, and certificate (for SSL) we are using.
+
+#+begin_src shell
+kubectl config view | yq '.clusters[0]'
+#+end_src
+
+Note the *cluster.server* and *cluster.certificate-authoritity-data*
+
+#+RESULTS:
+#+begin_example
+name: cloudnative.nz
+cluster:
+  certificate-authority-data: DATA+OMITTED
+  server: https://k8s.cloudnative.nz:6443
+#+end_example
+* forward localhost:6443 over ssh to current cluster
+
+Initially to fix I forwarded local port 6443 over ssh so I could reach.
+
+#+begin_src shell
+ssh -L 6443:k8s.cloudnative.nz:6443 root@cloudnative.nz
+#+end_src
+
+This required that I ensure k8s.cloudnative.nz resolved to localhost as the self-signed ssl certicate for clusters is often selfsigned, and we needed dns name to resolve to the port we forwarded.
+
+#+name: /etc/hosts + localhost overrides
+#+begin_example
+127.0.0.1	localhost k8s.fop.nz k8s.cloudnative.nz
+#+end_example
+
+* disable SSL checking when server name and certificaten SONS do not match
+
+When I created a cluster via ClusterAPI/clusterctl, it only contained IP addresses for valid SSL hosts.
+So after I forwarded localhost:6443...
+
+#+begin_src shell
+ssh -L 6443:145.40.114.15:6443 root@145.40.114.15
+#+end_src
+
+I would get on error regarding the TLS certificate, so I needed to comment out the original *server* and *certificate-authority-data*.
+After adding a *server* pointing to localhost I needed to add *insecure-skip-tls-verify* to my config to avoid certificate errors.
+
+#+begin_src yaml
+clusters:
+- name: sharingio
+  cluster:
+    insecure-skip-tls-verify: true
+    server: https://127.0.0.1:6443
+    # server: https://145.40.114.15:6443
+    # certificate-authority-data: LS0XXXXXX
+#+end_src
+* verifing that ports are actually blocked on Orange (French ISP)
+
+Here we use curl to connect to the same host with a 2 second timeout and insecurely (to ignore any SSL issues):
+#+begin_src shell
+curl --no-progress-meter --max-time 2 -k https://k8s.cloudnative.nz:6443 2>&1
+#+end_src
+
+#+RESULTS:
+#+begin_example
+curl: (28) Connection timed out after 2003 milliseconds
+#+end_example
+
+* redir to try different ports
+I tried a lot of ports, most still timed out.
+
+Eventually I found that FTP (port 21) still permitted, so I ran a redirect on the k8s server from port 21 to port 6443.
+
+#+begin_src tmux
+redir -n -l info :21 :6443
+#+end_src
+
+* Successful curl to our kubernetes API on port 21
+We are forbidden to *do* much here without authentication, but we *did successfully connect*!
+#+begin_src shell
+curl --no-progress-meter --max-time 2 -k https://k8s.cloudnative.nz:21 2>&1
+#+end_src
+
+#+RESULTS:
+#+begin_example
+{
+  "kind": "Status",
+  "apiVersion": "v1",
+  "metadata": {},
+  "status": "Failure",
+  "message": "forbidden: User \"system:anonymous\" cannot get path \"/\"",
+  "reason": "Forbidden",
+  "details": {},
+  "code": 403
+}
+#+end_example
+
+* Resolution
+
+Now we can successfully connect to our redirected port 21 to evade the French blockade!
+#+begin_src shell
+kubectl --request-timeout=2s version
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Client Version: version.Info{Major:"1", Minor:"26", GitVersion:"v1.26.3", GitCommit:"9e644106593f3f4aa98f8a84b23db5fa378900bd", GitTreeState:"clean", BuildDate:"2023-03-15T13:40:17Z", GoVersion:"go1.19.7", Compiler:"gc", Platform:"darwin/amd64"}
+Kustomize Version: v4.5.7
+Server Version: version.Info{Major:"1", Minor:"27", GitVersion:"v1.27.3", GitCommit:"25b4e43193bcda6c7328a6d147b1fb73a33f1598", GitTreeState:"clean", BuildDate:"2023-06-14T09:47:40Z", GoVersion:"go1.20.5", Compiler:"gc", Platform:"linux/amd64"}
+#+end_example
+* Background Notes
+** kubectl --request-timeout
+#+begin_example
+--request-timeout='0':
+    The length of time to wait before giving up on a single server request. Non-zero values should contain a
+    corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don't timeout requests.
+#+end_example
+
+** /etc/hosts
+#+begin_example
+HOSTS(5)            Linux Programmer's Manual
+
+NAME
+       hosts - static table lookup for hostnames
+
+SYNOPSIS
+       /etc/hosts
+
+DESCRIPTION
+       This  manual  page  describes  the format of the /etc/hosts file.  This file is a simple text file that associates IP addresses with hostnames, one line per IP address.  For
+       each host a single line should be present with the following information:
+
+              IP_address canonical_hostname [aliases...]
+#+end_example
+
+** curl --no-progress-meter
+#+begin_example
+--no-progress-meter
+       Option to switch off the progress meter output without muting or otherwise affecting warning and informational messages like -s, --silent does.
+#+end_example
+
+** curl --max-time
+#+begin_example
+-m, --max-time <fractional seconds>
+       Maximum time in seconds that you allow the whole operation to take.  This is useful for preventing your batch jobs from hanging for hours  due  to  slow  networks  or
+       links  going  down.   Since 7.32.0, this option accepts decimal values, but the actual timeout will decrease in accuracy as the specified timeout increases in decimal
+       precision.
+#+end_example
+** curl --insecure
+#+begin_example
+-k, --insecure
+       (TLS SFTP SCP) By default, every secure connection curl makes is verified to be secure before the transfer takes place. This option makes curl skip  the  verification
+       step and proceed without checking.
+#+end_example
+** ssh -L
+#+begin_example
+-L [bind_address:]port:host:hostport
+-L [bind_address:]port:remote_socket
+-L local_socket:host:hostport
+-L local_socket:remote_socket
+        Specifies that connections to the given TCP port or Unix socket on the local (client) host are to be forwarded to the given host and port, or Unix socket, on the re‐
+        mote side.  This works by allocating a socket to listen to either a TCP port on the local side, optionally bound to the specified bind_address, or to a Unix socket.
+        Whenever a connection is made to the local port or socket, the connection is forwarded over the secure channel, and a connection is made to either host port hostport,
+        or the Unix socket remote_socket, from the remote machine.
+
+        Port forwardings can also be specified in the configuration file.  Only the superuser can forward privileged ports.  IPv6 addresses can be specified by enclosing the
+        address in square brackets.
+
+        By default, the local port is bound in accordance with the GatewayPorts setting.  However, an explicit bind_address may be used to bind the connection to a specific
+        address.  The bind_address of “localhost” indicates that the listening port be bound for local use only, while an empty address or ‘*’ indicates that the port should
+        be available from all interfaces.
+#+end_example
+** redir
+https://github.com/troglobit/redir
+#+begin_example
+REDIR(1)   System Manager's Manual
+
+NAME
+     redir — redirect TCP connections
+
+SYNOPSIS
+     redir [-hinpsv] [-b IP] [-f TYPE] [-I NAME] [-l LEVEL] [-m BPS] [-o <1,2,3>] [-t SEC] [-w MSEC] [-x HOST:PORT] [-z BYTES] [SRC]:PORT [DST]:PORT
+DESCRIPTION
+     redir redirects TCP connections coming in on a local port, [SRC]:PORT, to a specified address/port combination, [DST]:PORT.  Both the SRC and DST arguments can be left out,
+     redir will then use 0.0.0.0.
+#+end_example
+** redir --foreground
+#+begin_example
+-n, --foreground         Run in foreground, do not detach from terminal
+#+end_example
+** redir --loglevel
+#+begin_example
+-l, --loglevel=LEVEL     Set log level: none, err, notice*, info, debug
+#+end_example
+** setting KUBECONFIG env in emacs
+This populates to subprocesses like shell src blocks
+#+begin_src elisp
+(setenv "KUBECONFIG" "/Users/hh/.kube/config-cloudnative.nz")
+#+end_src
+
+#+RESULTS:
+: /Users/hh/.kube/config-cloudnative.nz
