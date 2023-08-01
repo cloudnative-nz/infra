@@ -25,6 +25,7 @@ spec:
   values:
     controller:
       extraArgs:
+        enable-ssl-passthrough: true
         default-ssl-certificate: "ingress-nginx/wildcard-tls"
       service:
         externalIPs:
