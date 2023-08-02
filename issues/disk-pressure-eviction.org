@@ -1,0 +1,475 @@
+#+title: Cloudnative Nz Down
+* TLDR
+Zach noted that space.cloudnative.nz was down.
+
+When available storage drops below 15% on that disk, pods are evicted (deleted).
+
+This affected use due to 85% utilization of the OS / Ubuntu level files system used for *imagefs*
+
+See https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/#hard-eviction-thresholds
+
+Temporary fix was to double the space (100GB to 200GB) allocated to the root Ubuntu logical volume from the physical 500GB volume.
+
+Long term fix will be to setup our nodes with a dedicated *imagesfs* volume and monitor utilization.
+
+
+#+begin_src shell
+ssh root@k8s.cloudnative.nz df -h -t ext4 /
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Filesystem                         Size  Used Avail Use% Mounted on
+/dev/mapper/ubuntu--vg-ubuntu--lv  197G   79G  109G  43% /
+#+end_example
+
+#+begin_src shell
+curl https://space.cloudnative.nz --head | grep HTTP
+#+end_src
+
+#+RESULTS:
+#+begin_example
+HTTP/2 200 
+#+end_example
+* Background Reading
+** Ephemeral storage
+https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#local-ephemeral-storage
+https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#configurations-for-local-ephemeral-storage
+** Eviction
+https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/
+Node-pressure eviction is the process by which the kubelet proactively terminates pods to reclaim resources on nodes.
+** https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/#hard-eviction-thresholds
+A hard eviction threshold has no grace period. When a hard eviction threshold is met, the kubelet kills pods immediately without graceful termination to reclaim the starved resource.
+
+The kubelet has the following default hard eviction thresholds:
+
+- memory.available<100Mi
+- nodefs.available<10%
+- imagefs.available<15%
+- nodefs.inodesFree<5% (Linux nodes)
+
+These default values of hard eviction thresholds will only be set if none of the parameters is changed. If you changed the value of any parameter, then the values of other parameters will not be inherited as the default values and will be set to zero. In order to provide custom values, you should provide all the thresholds respectively.
+** https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/#node-conditions
+The kubelet reports node conditions to reflect that the node is under pressure because hard or soft eviction threshold is met, independent of configured grace periods.
+
+- DiskPressure
+  - nodefs.available, nodefs.inodesFree, imagefs.available, or imagefs.inodesFree
+  - Available disk space and inodes on either the node's root filesystem or image filesystem has satisfied an eviction threshold
+
+* Check that it's down
+#+begin_src shell
+curl https://space.cloudnative.nz --head | grep HTTP
+#+end_src
+
+#+RESULTS:
+#+begin_example
+HTTP/2 503 
+#+end_example
+* check on coder ingress
+#+begin_src shell
+kubectl -n coder get ingress
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAME    CLASS   HOSTS                                   ADDRESS           PORTS     AGE
+coder   nginx   space.cloudnative.nz,*.cloudnative.nz   123.253.178.101   80, 443   10d
+#+end_example
+* check on coder ingress.spec.rules[0].http.paths
+
+Here we look for the http paths that route */* to a backend service
+
+#+begin_src shell
+kubectl -n coder get ingress coder -o yaml \
+    | yq '.spec.rules[0].http.paths'
+#+end_src
+
+#+RESULTS:
+#+begin_example
+- backend:
+    service:
+      name: coder
+      port:
+        name: http
+  path: /
+  pathType: Prefix
+#+end_example
+* check on coder svc
+#+begin_src shell
+kubectl -n coder get svc coder
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAME    TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+coder   ClusterIP   10.104.202.123   <none>        80/TCP    10d
+#+end_example
+* determine coder svc ports
+#+begin_src shell :wrap "src yaml"
+kubectl -n coder get svc coder -o yaml \
+    | yq .spec.ports
+#+end_src
+
+#+RESULTS:
+#+begin_src yaml
+- name: http
+  port: 80
+  protocol: TCP
+  targetPort: http
+#+end_src
+* determine coder svc selector
+#+begin_src shell :wrap "src yaml"
+kubectl -n coder get svc coder -o yaml \
+    | yq .spec.selector
+#+end_src
+
+#+RESULTS:
+#+begin_src yaml
+app.kubernetes.io/instance: coder
+app.kubernetes.io/name: coder
+#+end_src
+* search for coder svc target pods
+#+begin_src shell
+kubectl -n coder get pods -l app.kubernetes.io/name=coder
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAME                     READY   STATUS                   RESTARTS       AGE
+coder-7996486845-6cph8   0/1     ContainerStatusUnknown   1              75m
+coder-7996486845-bkffz   0/1     ContainerStatusUnknown   1              114m
+coder-7996486845-bqmqp   0/1     ContainerStatusUnknown   1              30m
+coder-7996486845-cf577   0/1     ContainerStatusUnknown   1              121m
+coder-7996486845-dqnn8   1/1     Running                  0              14m
+coder-7996486845-dsrbr   0/1     ContainerStatusUnknown   1              46m
+coder-7996486845-ptc6n   0/1     ContainerStatusUnknown   1              107m
+coder-7996486845-rtgcj   0/1     ContainerStatusUnknown   1              153m
+coder-7996486845-rvkjx   0/1     ContainerStatusUnknown   1              92m
+coder-7996486845-sdz9n   0/1     ContainerStatusUnknown   1              70m
+coder-7996486845-vdgr9   0/1     ContainerStatusUnknown   1              137m
+coder-7996486845-x5cvp   0/1     ContainerStatusUnknown   6 (2d8h ago)   4d11h
+coder-7996486845-xz6b7   0/1     ContainerStatusUnknown   1              101m
+#+end_example
+* inspect Events for pods that seem to be having issues
+#+begin_src shell
+kubectl -n coder events --for=pod/coder-7996486845-bqmqp
+#+end_src
+
+#+RESULTS:
+#+begin_example
+LAST SEEN           TYPE      REASON                OBJECT                       MESSAGE
+30m (x2 over 35m)   Warning   FailedScheduling      Pod/coder-7996486845-bqmqp   0/1 nodes are available: 1 node(s) had untolerated taint {node.kubernetes.io/disk-pressure: }. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling..
+29m                 Normal    Scheduled             Pod/coder-7996486845-bqmqp   Successfully assigned coder/coder-7996486845-bqmqp to srv1
+29m                 Normal    Pulling               Pod/coder-7996486845-bqmqp   Pulling image "ghcr.io/coder/coder:v0.27.1"
+28m                 Normal    Pulled                Pod/coder-7996486845-bqmqp   Successfully pulled image "ghcr.io/coder/coder:v0.27.1" in 14.957685446s (14.957810454s including waiting)
+28m                 Normal    Created               Pod/coder-7996486845-bqmqp   Created container coder
+28m                 Normal    Started               Pod/coder-7996486845-bqmqp   Started container coder
+28m (x2 over 28m)   Warning   Unhealthy             Pod/coder-7996486845-bqmqp   Readiness probe failed: Get "http://10.0.0.119:8080/healthz": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+19m                 Warning   Evicted               Pod/coder-7996486845-bqmqp   The node was low on resource: ephemeral-storage. Threshold quantity: 15763389861, available: 14492980Ki. Container coder was using 421700Ki, request is 0, has larger consumption of ephemeral-storage.
+19m                 Normal    Killing               Pod/coder-7996486845-bqmqp   Stopping container coder
+19m                 Warning   ExceededGracePeriod   Pod/coder-7996486845-bqmqp   Container runtime did not kill the pod within specified grace period.
+#+end_example
+* inspect status for pods that seem to be having issues
+#+begin_src shell :wrap "src yaml"
+kubectl -n coder get pod/coder-7996486845-bqmqp -o yaml \
+    | yq .status \
+    | grep ^message:\\\|^phase:\\\|^reason:
+#+end_src
+
+#+RESULTS:
+#+begin_src yaml
+message: 'The node was low on resource: ephemeral-storage. Threshold quantity: 15763389861, available: 14492980Ki. Container coder was using 421700Ki, request is 0, has larger consumption of ephemeral-storage. '
+phase: Failed
+reason: Evicted
+#+end_src
+* inspect status.containerStatuses for pods that seem to be having issues
+#+begin_src shell :wrap "src yaml"
+kubectl -n coder get pod/coder-7996486845-bqmqp -o yaml \
+    | yq .status.containerStatuses.0
+#+end_src
+
+#+RESULTS:
+#+begin_src yaml
+image: ghcr.io/coder/coder:v0.27.1
+imageID: ""
+lastState:
+  terminated:
+    exitCode: 137
+    finishedAt: null
+    message: The container could not be located when the pod was deleted.  The container used to be Running
+    reason: ContainerStatusUnknown
+    startedAt: null
+name: coder
+ready: false
+restartCount: 1
+started: false
+state:
+  terminated:
+    exitCode: 137
+    finishedAt: null
+    message: The container could not be located when the pod was terminated
+    reason: ContainerStatusUnknown
+    startedAt: null
+#+end_src
+
+* inspect status.conditions for pods that seem to be having issues
+#+begin_src shell :wrap "src yaml"
+kubectl -n coder get pod/coder-7996486845-bqmqp -o yaml \
+    | yq .status.conditions.0
+#+end_src
+
+#+RESULTS:
+#+begin_src yaml
+lastProbeTime: null
+lastTransitionTime: "2023-07-28T06:44:40Z"
+message: 'The node was low on resource: ephemeral-storage. Threshold quantity: 15763389861, available: 14492980Ki. Container coder was using 421700Ki, request is 0, has larger consumption of ephemeral-storage. '
+reason: TerminationByKubelet
+status: "True"
+type: DisruptionTarget
+#+end_src
+* figure out node for broken pod
+#+begin_src shell :wrap "src yaml"
+kubectl -n coder get pod/coder-7996486845-bqmqp -o jsonpath="{.spec.nodeName}"
+#+end_src
+
+#+RESULTS:
+#+begin_src yaml
+srv1
+#+end_src
+
+* get nodes
+#+begin_src shell
+kubectl get nodes
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAME   STATUS   ROLES           AGE   VERSION
+srv1   Ready    control-plane   10d   v1.27.3
+#+end_example
+* events for node
+#+begin_src shell
+kubectl events -A --for=node/srv1
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAMESPACE   LAST SEEN                  TYPE      REASON                  OBJECT      MESSAGE
+default     60m                        Warning   FreeDiskSpaceFailed     Node/srv1   Failed to garbage collect required amount of images. Attempted to free 5100226969 bytes, but only found 4423240768 bytes eligible to free.
+longhorn    52m                        Warning   Schedulable             Node/srv1   the disk default-disk-e4eb62364051e56c(/var/lib/longhorn/) on the node srv1 has 25585254400 available, but requires reserved 31526778470, minimal 25% to schedule more replicas
+default     44m                        Warning   FreeDiskSpaceFailed     Node/srv1   Failed to garbage collect required amount of images. Attempted to free 5104617881 bytes, but only found 4423240768 bytes eligible to free.
+longhorn    38m (x2 over 44h)          Warning   Schedulable             Node/srv1   the disk default-disk-e4eb62364051e56c(/var/lib/longhorn/) on the node srv1 has 26109542400 available, but requires reserved 31526778470, minimal 25% to schedule more replicas
+default     34m                        Warning   FreeDiskSpaceFailed     Node/srv1   Failed to garbage collect required amount of images. Attempted to free 5029218713 bytes, but only found 301773 bytes eligible to free.
+default     29m                        Warning   FreeDiskSpaceFailed     Node/srv1   Failed to garbage collect required amount of images. Attempted to free 5111343513 bytes, but only found 4423240768 bytes eligible to free.
+longhorn    21m (x2 over 84m)          Warning   Schedulable             Node/srv1   the disk default-disk-e4eb62364051e56c(/var/lib/longhorn/) on the node srv1 has 26214400000 available, but requires reserved 31526778470, minimal 25% to schedule more replicas
+default     17m (x16 over 24h)         Normal    NodeHasDiskPressure     Node/srv1   Node srv1 status is now: NodeHasDiskPressure
+longhorn    17m (x929 over 24h)        Warning   Ready                   Node/srv1   Kubernetes node srv1 has pressure: KubeletHasDiskPressure, kubelet has disk pressure
+longhorn    5m (x1037 over 2d9h)       Normal    Ready                   Node/srv1   Node srv1 is ready
+default     4m18s (x2379 over 2d16h)   Normal    NodeHasNoDiskPressure   Node/srv1   Node srv1 status is now: NodeHasNoDiskPressure
+default     2m11s (x72 over 24h)       Warning   EvictionThresholdMet    Node/srv1   Attempting to reclaim ephemeral-storage
+#+end_example
+* node.spec.taints
+#+begin_src shell :wrap "src yaml"
+kubectl get node srv1 -o yaml \
+    | yq .spec.taints
+#+end_src
+
+#+RESULTS:
+#+begin_src yaml
+- effect: NoSchedule
+  key: node.kubernetes.io/disk-pressure
+  timeAdded: "2023-07-28T07:38:40Z"
+#+end_src
+
+* node.status.allocatable
+#+begin_src shell :wrap "src yaml"
+kubectl get node srv1 -o yaml \
+    | yq .status.allocatable
+#+end_src
+
+#+RESULTS:
+#+begin_src yaml
+cpu: "24"
+ephemeral-storage: "94580335255"
+hugepages-1Gi: "0"
+hugepages-2Mi: "0"
+memory: 197909196Ki
+pods: "110"
+#+end_src
+
+* node.status.capacity
+#+begin_src shell :wrap "src yaml"
+kubectl get node srv1 -o yaml \
+    | yq .status.capacity
+#+end_src
+
+#+RESULTS:
+#+begin_src yaml
+cpu: "24"
+ephemeral-storage: 102626232Ki
+hugepages-1Gi: "0"
+hugepages-2Mi: "0"
+memory: 198011596Ki
+pods: "110"
+#+end_src
+
+* node.status.conditions
+#+begin_src shell :wrap "src yaml"
+kubectl get node srv1 -o yaml \
+    | yq .status.conditions
+#+end_src
+
+#+RESULTS:
+#+begin_src yaml
+- lastHeartbeatTime: "2023-07-17T14:56:32Z"
+  lastTransitionTime: "2023-07-17T14:56:32Z"
+  message: Cilium is running on this node
+  reason: CiliumIsUp
+  status: "False"
+  type: NetworkUnavailable
+- lastHeartbeatTime: "2023-07-28T07:45:28Z"
+  lastTransitionTime: "2023-07-25T22:14:35Z"
+  message: kubelet has sufficient memory available
+  reason: KubeletHasSufficientMemory
+  status: "False"
+  type: MemoryPressure
+- lastHeartbeatTime: "2023-07-28T07:45:28Z"
+  lastTransitionTime: "2023-07-28T07:44:38Z"
+  message: kubelet has no disk pressure
+  reason: KubeletHasNoDiskPressure
+  status: "False"
+  type: DiskPressure
+- lastHeartbeatTime: "2023-07-28T07:45:28Z"
+  lastTransitionTime: "2023-07-25T22:14:35Z"
+  message: kubelet has sufficient PID available
+  reason: KubeletHasSufficientPID
+  status: "False"
+  type: PIDPressure
+- lastHeartbeatTime: "2023-07-28T07:45:28Z"
+  lastTransitionTime: "2023-07-25T22:14:35Z"
+  message: kubelet is posting ready status. AppArmor enabled
+  reason: KubeletReady
+  status: "True"
+  type: Ready
+#+end_src
+* node.status.condition of interest (DiskPressure)
+#+begin_src shell :wrap "src yaml"
+kubectl get node srv1 -o yaml \
+    | yq .status.conditions.2
+#+end_src
+
+#+RESULTS:
+#+begin_src yaml
+lastHeartbeatTime: "2023-07-28T08:04:53Z"
+lastTransitionTime: "2023-07-28T08:00:28Z"
+message: kubelet has disk pressure
+reason: KubeletHasDiskPressure
+status: "True"
+type: DiskPressure
+#+end_src
+
+* node.stats.runtime
+#+begin_src shell :wrap "src yaml"
+kubectl get --raw "/api/v1/nodes/srv1/proxy/stats/summary" \
+    | yq -P .node.runtime
+#+end_src
+
+#+RESULTS:
+#+begin_src yaml
+imageFs:
+  time: "2023-07-28T08:01:03Z"
+  availableBytes: 15480643584
+  capacityBytes: 105089261568
+  usedBytes: 46888923136
+  inodesFree: 4701743
+  inodes: 6553600
+  inodesUsed: 1577494
+#+end_src
+
+* node.stats.fs
+#+begin_src shell :wrap "src yaml"
+kubectl get --raw "/api/v1/nodes/srv1/proxy/stats/summary" \
+    | yq -P .node.fs
+#+end_src
+
+#+RESULTS:
+#+begin_src yaml
+time: "2023-07-28T08:01:33Z"
+availableBytes: 15624622080
+capacityBytes: 105089261568
+usedBytes: 84079153152
+inodesFree: 4703165
+inodes: 6553600
+inodesUsed: 1850435
+#+end_src
+
+* Take a look at node ext4 filesystem from OS level
+Looks like the filesystem is filling up to closer to 85% (that's when pods get evicted)
+#+begin_src shell :nodir "/ssh:root@k8s.cloudnative.nz:/"
+ssh root@k8s.cloudnative.nz df -h -t ext4
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Filesystem                                              Size  Used Avail Use% Mounted on
+/dev/mapper/ubuntu--vg-ubuntu--lv                        98G   79G   15G  85% /
+/dev/sda2                                               2.0G  253M  1.6G  14% /boot
+/dev/longhorn/pvc-c995ff5d-f177-4d8c-a88c-bbc830375827  7.8G  233M  7.6G   3% /var/lib/kubelet/pods/73537501-f49d-4a63-a07c-436bf71b5d5b/volumes/kubernetes.io~csi/pvc-c995ff5d-f177-4d8c-a88c-bbc830375827/mount
+#+end_example
+* extend the root logical volume
+Looks like the filesystem is filling up to closer to 85% (that's when pods get evicted)
+#+begin_src shell :noeval
+lvextend -L200G /dev/mapper/ubuntu--vg-ubuntu--lv
+#+end_src
+
+#+begin_example
+  Size of logical volume ubuntu-vg/ubuntu-lv changed from 100.00 GiB (25600 extents) to 200.00 GiB (51200 extents).
+  Logical volume ubuntu-vg/ubuntu-lv successfully resized.
+#+end_example
+* Inspect resized logical volumes
+Looks like the filesystem is filling up to closer to 85% (that's when pods get evicted)
+#+begin_src shell :nodir "/ssh:root@k8s.cloudnative.nz:/"
+ssh root@k8s.cloudnative.nz lvs
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  LV        VG        Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  ubuntu-lv ubuntu-vg -wi-ao---- 200.00g
+#+end_example
+
+* Inspect physical volumes allocation
+Looks like the filesystem is filling up to closer to 85% (that's when pods get evicted)
+#+begin_src shell :nodir "/ssh:root@k8s.cloudnative.nz:/"
+ssh root@k8s.cloudnative.nz pvs
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  PV         VG        Fmt  Attr PSize    PFree
+  /dev/sda3  ubuntu-vg lvm2 a--  <463.73g <263.73g
+#+end_example
+* Resize the root filesystem (on top of the now larger Logical Volume)
+#+begin_src
+resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv
+#+end_src
+#+begin_example
+resize2fs 1.46.5 (30-Dec-2021)
+Filesystem at /dev/mapper/ubuntu--vg-ubuntu--lv is mounted on /; on-line resizing required
+old_desc_blocks = 13, new_desc_blocks = 25
+The filesystem on /dev/mapper/ubuntu--vg-ubuntu--lv is now 52428800 (4k) blocks long.
+#+end_example
+
+* check free space at OS now that volume is extended
+#+begin_src shell :nodir "/ssh:root@k8s.cloudnative.nz:/"
+ssh root@k8s.cloudnative.nz df -h -t ext4
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Filesystem                                              Size  Used Avail Use% Mounted on
+/dev/mapper/ubuntu--vg-ubuntu--lv                       197G   79G  109G  42% /
+/dev/sda2                                               2.0G  253M  1.6G  14% /boot
+/dev/longhorn/pvc-c995ff5d-f177-4d8c-a88c-bbc830375827  7.8G  233M  7.6G   3% /var/lib/kubelet/pods/73537501-f49d-4a63-a07c-436bf71b5d5b/volumes/kubernetes.io~csi/pvc-c995ff5d-f177-4d8c-a88c-bbc830375827/mount
+#+end_example
+
