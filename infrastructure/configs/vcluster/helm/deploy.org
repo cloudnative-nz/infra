@@ -1,0 +1,218 @@
+#+title: Deploy a Vcluster with Helm
+* check out the configmap
+we may need to update it
+* ensure loft helm repo is added
+#+begin_src shell
+helm repo add loft https://charts.loft.sh
+#+end_src
+
+#+RESULTS:
+#+begin_example
+"loft" already exists with the same configuration, skipping
+#+end_example
+* ensure loft helm repo is added
+#+begin_src shell
+helm search repo loft | grep vcluster | grep -v pro
+#+end_src
+
+#+RESULTS:
+#+begin_example
+loft/vcluster                    	0.15.2       	           	vcluster - Virtual Kubernetes Clusters
+loft/vcluster-eks                	0.15.2       	           	vcluster - Virtual Kubernetes Clusters (eks)
+loft/vcluster-k0s                	0.15.2       	           	vcluster - Virtual Kubernetes Clusters (k0s)
+loft/vcluster-k8s                	0.15.2       	           	vcluster - Virtual Kubernetes Clusters (k8s)
+#+end_example
+* we'll be using the vcluster-k8s helm chart
+https://github.com/loft-sh/vcluster/tree/main/charts/k8s
+#+begin_src shell :results silent
+helm show values loft/vcluster-k8s | grep -v '#' > vcluster-k8s-values.yaml
+#+end_src
+** main sections
+#+begin_src shell
+cat  vcluster-k8s-values.yaml | yq keys
+#+end_src
+
+#+RESULTS:
+#+begin_example
+- defaultImageRegistry
+- globalAnnotations
+- headless
+- enableHA
+- plugin
+- sync
+- fallbackHostDns
+- mapServices
+- proxy
+- hostpathMapper
+- syncer
+- etcd
+- controller
+- scheduler
+- api
+- serviceAccount
+- workloadServiceAccount
+- rbac
+- service
+- job
+- ingress
+- openshift
+- coredns
+- isolation
+- init
+- multiNamespaceMode
+- telemetry
+#+end_example
+** api
+#+begin_src shell
+cat  vcluster-k8s-values.yaml | yq .api
+#+end_src
+
+#+RESULTS:
+#+begin_example
+image: registry.k8s.io/kube-apiserver:v1.26.1
+extraArgs: []
+replicas: 1
+nodeSelector: {}
+affinity: {}
+tolerations: []
+labels: {}
+annotations: {}
+podAnnotations: {}
+podLabels: {}
+resources:
+  requests:
+    cpu: 40m
+    memory: 300Mi
+priorityClassName: ""
+securityContext: {}
+serviceAnnotations: {}
+#+end_example
+
+* deploy audit configmap
+Be sure and set the name
+#+begin_src shell
+kubectl apply -n hh -f configmap.yaml
+#+end_src
+
+#+RESULTS:
+#+begin_example
+configmap/k8s-hh-audit created
+#+end_example
+
+* install helm release
+#+begin_src shell
+helm upgrade k8s-hh vcluster-k8s --repo https://charts.loft.sh --version 0.15.2 --namespace hh --install --values ./values.yaml --values ./custom-values.yaml
+#+end_src
+* retreive your kubeconfig
+#+begin_src shell :results silent
+kubectl get -n hh secret kubeconfig-hh -o json | jq .data.config -r | base64 -d > ~/.kube/config-hh-cloudnative.nz.conf
+#+end_src
+* view our kubeconfig
+#+begin_src shell
+kubectl --kubeconfig ~/.kube/config-hh-cloudnative.nz.conf config view
+#+end_src
+
+#+RESULTS:
+#+begin_example
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: DATA+OMITTED
+    server: https://k8s-hh.cloudnative.nz
+  name: k8s-hh
+contexts:
+- context:
+    cluster: k8s-hh
+    user: k8s-hh
+  name: k8s-hh
+current-context: k8s-hh
+kind: Config
+preferences: {}
+users:
+- name: k8s-hh
+  user:
+    client-certificate-data: DATA+OMITTED
+    client-key-data: DATA+OMITTED
+#+end_example
+
+* test our kubeconfig
+#+begin_src shell
+kubectl --kubeconfig ~/.kube/config-hh-cloudnative.nz.conf cluster-info
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Kubernetes control plane is running at https://k8s-hh.cloudnative.nz
+CoreDNS is running at https://k8s-hh.cloudnative.nz/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+#+end_example
+
+* deploy flux
+#+begin_src shell :async
+kubectl --kubeconfig ~/.kube/config-hh-cloudnative.nz.conf apply -f \
+    https://github.com/fluxcd/flux2/releases/latest/download/install.yaml
+#+end_src
+
+* deploy apisnoop
+#+begin_src shell
+kubectl --kubeconfig ~/.kube/config-hh-cloudnative.nz.conf apply -f \
+  https://raw.githubusercontent.com/cloudnative-coop/space-templates/7332c4cceab250eb9832b98129f6d9ed4162077e/iipod-metal/cluster/apisnoop.yaml
+#+end_src
+
+#+RESULTS:
+#+begin_example
+gitrepository.source.toolkit.fluxcd.io/apisnoop created
+helmrelease.helm.toolkit.fluxcd.io/snoopdb created
+helmrelease.helm.toolkit.fluxcd.io/auditlogger created
+#+end_example
+* check helm releases
+#+begin_src shell
+kubectl --kubeconfig ~/.kube/config-hh-cloudnative.nz.conf get helmreleases
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAME          AGE   READY     STATUS
+auditlogger   38s   Unknown   Reconciliation in progress
+snoopdb       38s   Unknown   Reconciliation in progress
+#+end_example
+* check helm releases
+#+begin_src shell
+kubectl --kubeconfig ~/.kube/config-hh-cloudnative.nz.conf get pods -A
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAMESPACE     NAME                                           READY   STATUS             RESTARTS      AGE
+default       auditlogger-6bdc5ff947-5q5r4                   0/1     CrashLoopBackOff   4 (28s ago)   2m1s
+default       snoopdb-0                                      1/1     Running            0             2m1s
+flux-system   helm-controller-677c867499-dx28f               1/1     Running            0             61m
+flux-system   image-automation-controller-84c7db4b76-nrx9p   1/1     Running            0             61m
+flux-system   image-reflector-controller-86c558b99f-mkptg    1/1     Running            0             61m
+flux-system   kustomize-controller-744ddc8787-ztphg          1/1     Running            0             61m
+flux-system   notification-controller-8478bd5d78-7dhxl       1/1     Running            0             61m
+flux-system   source-controller-6f96ccdc79-vxmwv             1/1     Running            0             61m
+kube-system   coredns-64c4b4d78f-7nxgb                       1/1     Running            0             70m
+#+end_example
+* check snoopdb-0 pod
+#+begin_src shell
+kubectl --kubeconfig ~/.kube/config-hh-cloudnative.nz.conf describe pods snoopdb-0 | grep -A99 Events:
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Events:
+  Type     Reason     Age   From               Message
+  ----     ------     ----  ----               -------
+  Normal   Scheduled  91s   default-scheduler  Successfully assigned default/snoopdb-0 to srv1
+  Normal   Pulling    89s   kubelet            Pulling image "library/alpine:3.13.1"
+  Normal   Pulled     84s   kubelet            Successfully pulled image "library/alpine:3.13.1" in 5.455229761s (5.455329325s including waiting)
+  Normal   Created    84s   kubelet            Created container vcluster-rewrite-hosts
+  Normal   Started    82s   kubelet            Started container vcluster-rewrite-hosts
+  Normal   Pulling    82s   kubelet            Pulling image "gcr.io/k8s-staging-apisnoop/snoopdb:v20230619-0.2.0-584-g6289ec1"
+  Normal   Pulled     15s   kubelet            Successfully pulled image "gcr.io/k8s-staging-apisnoop/snoopdb:v20230619-0.2.0-584-g6289ec1" in 55.614813695s (1m6.323853732s including waiting)
+  Normal   Created    15s   kubelet            Created container snoopdb
+  Normal   Started    15s   kubelet            Started container snoopdb
+  Warning  Unhealthy  11s   kubelet            Liveness probe failed: /var/run/postgresql:5432 - no response
+#+end_example

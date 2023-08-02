@@ -1,0 +1,83 @@
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  host: k8s-hh.cloudnative.nz
+syncer:
+  kubeConfigContextName: "k8s-hh"
+  # https://www.vcluster.com/docs/config-reference
+  extraArgs:
+    # --target-namespace string
+    #   The namespace to run the virtual cluster in
+    #   (defaults to current namespace)
+    ### We are intentinally leaving this blank
+    # --tls-san strings
+    #    Add additional hostname or IP as a
+    #    Subject Alternative Name in the TLS cert
+    - --tls-san=k8s-hh.cloudnative.nz
+    # --out-kube-config-server string
+    #   If specified, the virtual cluster will use this
+    #   server for the generated kube config
+    #   (e.g. https://my-vcluster.domain.com)
+    - --out-kube-config-server=https://k8s-hh.cloudnative.nz
+    # --out-kube-config-secret string
+    #   If specified, the virtual cluster will write
+    #   the generated kube config to the given secret
+    - --out-kube-config-secret=kubeconfig-hh
+    # --out-kube-config-secret-namespace string
+    #   If specified, the virtual cluster will write the generated kube config in the given namespace
+    # - --out-kube-config-secret-namespace=hh
+controller:
+  image: registry.k8s.io/kube-controller-manager:v1.27.3
+scheduler:
+  image: registry.k8s.io/kube-scheduler:v1.27.3
+api:
+  image: registry.k8s.io/kube-apiserver:v1.27.3
+  extraArgs:
+    - "--audit-policy-file=/etc/kubernetes/audit/policy.yaml"
+    - "--audit-webhook-config-file=/etc/kubernetes/audit/sink.yaml"
+  volumeMounts:
+    - name: audit
+      mountPath: /etc/kubernetes/audit
+      readOnly: true
+  volumes:
+    - name: audit
+      configMap:
+        name: k8s-hh-audit
+        items:
+          - key: sink.yaml
+            path: sink.yaml
+          - key: policy.yaml
+            path: policy.yaml
+fallbackHostDns: true
+sync:
+  ingresses:
+    enabled: true
+  # https://www.vcluster.com/docs/architecture/storage
+  persistentvolumes:
+    enabled: true
+  # If you want to create custom storage classes inside the vcluster.
+  storageclasses:
+    enabled: true
+init:
+  manifests: |-
+    # within the vcluster
+    ---
+    apiVersion: v1
+    kind: Namespace
+    metadata: inner-namespace
+  manifestsTemplate: |-
+    # to use helm values inside manifests, e.g.: {{ .Release.Name }}
+    ---
+    apiVersion: v1
+    kind: Namespace
+    metadata: {{ .Release.Name }}
+  # helm:
+  #   - name: x
+  #     repo: X
+  #     chart: x
+  #     version: X
+  #     values: |-
+  #       key: "value"
+  #     timeout: "120s"
+  #     releaseName: "x"
+  #     releaseNameSpace: "x"
