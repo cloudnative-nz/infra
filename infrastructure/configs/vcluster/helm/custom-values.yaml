@@ -1,16 +1,16 @@
 ingress:
-  host: k8s-heyste.cloudnative.nz
+  host: k8s-hh.cloudnative.nz
 syncer:
-  kubeConfigContextName: "k8s-heyste"
+  kubeConfigContextName: "k8s-hh"
   extraArgs:
-    - --tls-san=k8s-heyste.cloudnative.nz
-    - --out-kube-config-server=https://k8s-heyste.cloudnative.nz
-    - --out-kube-config-secret=kubeconfig-heyste
+    - --tls-san=k8s-hh.cloudnative.nz
+    - --out-kube-config-server=https://k8s-hh.cloudnative.nz
+    - --out-kube-config-secret=kubeconfig-hh
 api:
   volumes:
     - name: audit
       configMap:
-        name: k8s-heyste-audit
+        name: k8s-audit
         items:
           - key: sink.yaml
             path: sink.yaml

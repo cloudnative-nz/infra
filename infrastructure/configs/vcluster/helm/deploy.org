@@ -3,8 +3,10 @@
 #+PROPERTY: header-args:shell+ :async true
 #+PROPERTY: header-args:shell+ :eval no-export
 #+PROPERTY: header-args:shell+ :var KUBECONFIG=(concat (getenv "HOME") "/.kube/config-cloudnative.nz")
-#+PROPERTY: header-args:shell+ :var VCKUBECONFIG=(concat (getenv "HOME") "/.kube/config-vc-heyste-cloudnative.nz")
+#+PROPERTY: header-args:shell+ :var VCKUBECONFIG=(concat (getenv "HOME") "/.kube/config-" (getenv "USER") "-cloudnative.nz.conf")
+#+PROPERTY: header-args:shell+ :var NAMESPACE=(getenv "USER")
 #+PROPERTY: header-args:shell+ :prologue "exec 2>&1\nexport KUBECONFIG VCKUBECONFIG"
+
 #+PROPERTY: header-args:shell+ :epilogue ":\n"
 
 * confirm cluster
@@ -109,42 +111,122 @@ priorityClassName: ""
 securityContext: {}
 serviceAnnotations: {}
 #+end_example
+* deploy k8s-audit configmap
+This creates the content for the sink.yaml and policy.yaml
+that kube-apiserver needs to decide what audit events to send and to where.
 
-* deploy audit configmap
+#+begin_src shell
+kubectl apply -n $USER -f - <<EOF
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k8s-audit
+data:
+  sink.yaml: |
+    apiVersion: v1
+    kind: Config
+    current-context: auditsink-context
+    clusters:
+      - name: auditsink-cluster
+        cluster:
+          server: http://auditlogger-x-default-k8s-${USER}.${USER}:9900/events
+    contexts:
+      - context:
+          user: ""
+          cluster: auditsink-cluster
+        name: auditsink-context
+    users: []
+    preferences: {}
+  policy.yaml: |
+    apiVersion: audit.k8s.io/v1
+    kind: Policy
+    rules:
+      - level: Metadata
+        stages:
+          - ResponseComplete
+EOF
+#+end_src
+
+#+RESULTS:
+#+begin_example
+configmap/k8s-audit configured
+#+end_example
+
+* deploy k8s-audit service
 Be sure and set the name
 
 #+begin_src shell
-kubectl apply -n heyste -f configmap.yaml
-#+end_src
+kubectl apply -n $USER -f - <<EOF
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8s-audit
+spec:
+  ports:
+    - name: http
+      port: 9900
+      protocol: TCP
+      targetPort: http
+  selector:
+    app.kubernetes.io/instance: auditlogger
+    app.kubernetes.io/name: auditlogger
+  type: ClusterIP
+EOF
 
 #+RESULTS:
 #+begin_example
 configmap/k8s-heyste-audit created
 #+end_example
 
+* setup custom values for helm
+#+begin_src shell :results silent
+cat > custom-values.yaml <<EOF
+ingress:
+  host: k8s-${USER}.cloudnative.nz
+syncer:
+  kubeConfigContextName: "k8s-${USER}"
+  extraArgs:
+    - --tls-san=k8s-${USER}.cloudnative.nz
+    - --out-kube-config-server=https://k8s-${USER}.cloudnative.nz
+    - --out-kube-config-secret=kubeconfig-${USER}
+api:
+  volumes:
+    - name: audit
+      configMap:
+        name: k8s-audit
+        items:
+          - key: sink.yaml
+            path: sink.yaml
+          - key: policy.yaml
+            path: policy.yaml
+EOF
+#+end_src
+
 * install vcluster via helm release
 
 #+begin_src shell
-helm upgrade k8s-heyste vcluster-k8s --repo https://charts.loft.sh --version 0.15.2 --namespace heyste --install --values ./values.yaml --values ./custom-values.yaml
+helm upgrade k8s-$USER vcluster-k8s --repo https://charts.loft.sh --version 0.15.2 --namespace $USER --install --values ./values.yaml --values ./custom-values.yaml
 #+end_src
 
 #+RESULTS:
 #+begin_example
-Release "k8s-heyste" does not exist. Installing it now.
-NAME: k8s-heyste
-LAST DEPLOYED: Thu Aug  3 15:20:03 2023
-NAMESPACE: heyste
+Release "k8s-hh" does not exist. Installing it now.
+NAME: k8s-hh
+LAST DEPLOYED: Thu Aug  3 11:34:51 2023
+NAMESPACE: hh
 STATUS: deployed
 REVISION: 1
 TEST SUITE: None
 NOTES:
 Thank you for installing vcluster.
 
-Your vcluster is named k8s-heyste in namespace heyste.
+Your vcluster is named k8s-hh in namespace hh.
 
 To connect to the vcluster, use vcluster CLI (https://www.vcluster.com/docs/getting-started/setup):
-  $ vcluster connect k8s-heyste -n heyste
-  $ vcluster connect k8s-heyste -n heyste -- kubectl get ns
+  $ vcluster connect k8s-hh -n hh
+  $ vcluster connect k8s-hh -n hh -- kubectl get ns
 
 
 For more information, please take a look at the vcluster docs at https://www.vcluster.com/docs
@@ -153,7 +235,7 @@ For more information, please take a look at the vcluster docs at https://www.vcl
 * retreive your kubeconfig
 
 #+begin_src shell :results silent
-kubectl get -n heyste secret kubeconfig-heyste -o json | jq .data.config -r | base64 -d > $VCKUBECONFIG
+kubectl get -n $USER secret kubeconfig-$USER -o json | jq .data.config -r | base64 -d > $VCKUBECONFIG
 #+end_src
 
 * view our kubeconfig
@@ -168,18 +250,18 @@ apiVersion: v1
 clusters:
 - cluster:
     certificate-authority-data: DATA+OMITTED
-    server: https://k8s-heyste.cloudnative.nz
-  name: k8s-heyste
+    server: https://k8s-hh.cloudnative.nz
+  name: k8s-hh
 contexts:
 - context:
-    cluster: k8s-heyste
-    user: k8s-heyste
-  name: k8s-heyste
-current-context: k8s-heyste
+    cluster: k8s-hh
+    user: k8s-hh
+  name: k8s-hh
+current-context: k8s-hh
 kind: Config
 preferences: {}
 users:
-- name: k8s-heyste
+- name: k8s-hh
   user:
     client-certificate-data: DATA+OMITTED
     client-key-data: DATA+OMITTED
@@ -208,58 +290,58 @@ kubectl --kubeconfig $VCKUBECONFIG apply -f \
 
 #+RESULTS:
 #+begin_example
-namespace/flux-system created
-resourcequota/critical-pods created
-customresourcedefinition.apiextensions.k8s.io/alerts.notification.toolkit.fluxcd.io created
-customresourcedefinition.apiextensions.k8s.io/buckets.source.toolkit.fluxcd.io created
-customresourcedefinition.apiextensions.k8s.io/gitrepositories.source.toolkit.fluxcd.io created
-customresourcedefinition.apiextensions.k8s.io/helmcharts.source.toolkit.fluxcd.io created
-customresourcedefinition.apiextensions.k8s.io/helmreleases.helm.toolkit.fluxcd.io created
-customresourcedefinition.apiextensions.k8s.io/helmrepositories.source.toolkit.fluxcd.io created
-customresourcedefinition.apiextensions.k8s.io/imagepolicies.image.toolkit.fluxcd.io created
-customresourcedefinition.apiextensions.k8s.io/imagerepositories.image.toolkit.fluxcd.io created
-customresourcedefinition.apiextensions.k8s.io/imageupdateautomations.image.toolkit.fluxcd.io created
-customresourcedefinition.apiextensions.k8s.io/kustomizations.kustomize.toolkit.fluxcd.io created
-customresourcedefinition.apiextensions.k8s.io/ocirepositories.source.toolkit.fluxcd.io created
-customresourcedefinition.apiextensions.k8s.io/providers.notification.toolkit.fluxcd.io created
-customresourcedefinition.apiextensions.k8s.io/receivers.notification.toolkit.fluxcd.io created
-serviceaccount/helm-controller created
-serviceaccount/image-automation-controller created
-serviceaccount/image-reflector-controller created
-serviceaccount/kustomize-controller created
-serviceaccount/notification-controller created
-serviceaccount/source-controller created
-clusterrole.rbac.authorization.k8s.io/crd-controller created
-clusterrole.rbac.authorization.k8s.io/flux-edit created
-clusterrole.rbac.authorization.k8s.io/flux-view created
-clusterrolebinding.rbac.authorization.k8s.io/cluster-reconciler created
-clusterrolebinding.rbac.authorization.k8s.io/crd-controller created
+namespace/flux-system unchanged
+resourcequota/critical-pods configured
+customresourcedefinition.apiextensions.k8s.io/alerts.notification.toolkit.fluxcd.io unchanged
+customresourcedefinition.apiextensions.k8s.io/buckets.source.toolkit.fluxcd.io unchanged
+customresourcedefinition.apiextensions.k8s.io/gitrepositories.source.toolkit.fluxcd.io unchanged
+customresourcedefinition.apiextensions.k8s.io/helmcharts.source.toolkit.fluxcd.io unchanged
+customresourcedefinition.apiextensions.k8s.io/helmreleases.helm.toolkit.fluxcd.io unchanged
+customresourcedefinition.apiextensions.k8s.io/helmrepositories.source.toolkit.fluxcd.io unchanged
+customresourcedefinition.apiextensions.k8s.io/imagepolicies.image.toolkit.fluxcd.io unchanged
+customresourcedefinition.apiextensions.k8s.io/imagerepositories.image.toolkit.fluxcd.io unchanged
+customresourcedefinition.apiextensions.k8s.io/imageupdateautomations.image.toolkit.fluxcd.io unchanged
+customresourcedefinition.apiextensions.k8s.io/kustomizations.kustomize.toolkit.fluxcd.io unchanged
+customresourcedefinition.apiextensions.k8s.io/ocirepositories.source.toolkit.fluxcd.io unchanged
+customresourcedefinition.apiextensions.k8s.io/providers.notification.toolkit.fluxcd.io unchanged
+customresourcedefinition.apiextensions.k8s.io/receivers.notification.toolkit.fluxcd.io unchanged
+serviceaccount/helm-controller unchanged
+serviceaccount/image-automation-controller unchanged
+serviceaccount/image-reflector-controller unchanged
+serviceaccount/kustomize-controller unchanged
+serviceaccount/notification-controller unchanged
+serviceaccount/source-controller unchanged
+clusterrole.rbac.authorization.k8s.io/crd-controller unchanged
+clusterrole.rbac.authorization.k8s.io/flux-edit unchanged
+clusterrole.rbac.authorization.k8s.io/flux-view unchanged
+clusterrolebinding.rbac.authorization.k8s.io/cluster-reconciler unchanged
+clusterrolebinding.rbac.authorization.k8s.io/crd-controller unchanged
 service/notification-controller created
 service/source-controller created
 service/webhook-receiver created
-deployment.apps/helm-controller created
-deployment.apps/image-automation-controller created
-deployment.apps/image-reflector-controller created
-deployment.apps/kustomize-controller created
-deployment.apps/notification-controller created
-deployment.apps/source-controller created
-networkpolicy.networking.k8s.io/allow-egress created
-networkpolicy.networking.k8s.io/allow-scraping created
-networkpolicy.networking.k8s.io/allow-webhooks created
+deployment.apps/helm-controller configured
+deployment.apps/image-automation-controller configured
+deployment.apps/image-reflector-controller configured
+deployment.apps/kustomize-controller configured
+deployment.apps/notification-controller configured
+deployment.apps/source-controller configured
+networkpolicy.networking.k8s.io/allow-egress unchanged
+networkpolicy.networking.k8s.io/allow-scraping unchanged
+networkpolicy.networking.k8s.io/allow-webhooks unchanged
 #+end_example
 
 * deploy apisnoop
 
 #+begin_src shell
 kubectl --kubeconfig $VCKUBECONFIG apply -f \
-  https://raw.githubusercontent.com/cloudnative-coop/space-templates/7332c4cceab250eb9832b98129f6d9ed4162077e/iipod-metal/cluster/apisnoop.yaml
+ https://raw.githubusercontent.com/cncf/apisnoop/vcluster/charts/flux-deploy.yaml
 #+end_src
 
 #+RESULTS:
 #+begin_example
-gitrepository.source.toolkit.fluxcd.io/apisnoop created
-helmrelease.helm.toolkit.fluxcd.io/snoopdb created
-helmrelease.helm.toolkit.fluxcd.io/auditlogger created
+gitrepository.source.toolkit.fluxcd.io/apisnoop unchanged
+helmrelease.helm.toolkit.fluxcd.io/snoopdb unchanged
+helmrelease.helm.toolkit.fluxcd.io/auditlogger unchanged
 #+end_example
 
 * check helm releases
@@ -271,10 +353,14 @@ kubectl --kubeconfig $VCKUBECONFIG get helmreleases
 #+RESULTS:
 #+begin_example
 NAME          AGE   READY   STATUS
-auditlogger   18m   False   install retries exhausted
-snoopdb       19m   True    Release reconciliation succeeded
+auditlogger   13h   True    Release reconciliation succeeded
+snoopdb       13h   True    Release reconciliation succeeded
 #+end_example
-
+* possibly need to trigger reconciliation
+#+begin_src shell
+flux reconcile helmrelease -n default auditlogger
+flux reconcile helmrelease -n default snoopdb
+#+end_src
 * check nodes
 
 #+begin_src shell
@@ -438,3 +524,109 @@ kubectl --kubeconfig $KUBECONFIG get svc -A | grep 10.96.96.96
 #+begin_example
 hh                                     auditlogger-x-default-x-k8s-hh                       ClusterIP      10.96.96.96      <none>            9900/TCP                     7h39m
 #+end_example
+* check auditlogger
+#+begin_src shell
+USER=hh
+curl http://auditlogger-x-default-x-k8s-$USER.$USER:9900
+#+end_src
+* check postgresq
+#+begin_src shell
+USER=hh
+kubectl --kubeconfig $VCKUBECONFIG exec snoopdb-0 -- psql -c 'select count(*) from testing.audit_event;'
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ count
+-------
+     0
+(1 row)
+
+#+end_example
+
+* debug auditlogger
+** check os-release
+#+begin_src shell
+export AUDIT_LOGGER=$(kubectl --kubeconfig $VCKUBECONFIG get pods -oname | grep audit | awk -F '/' '{print $2}')
+kubectl --kubeconfig $VCKUBECONFIG exec $AUDIT_LOGGER -- cat /etc/os-release
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAME="Alpine Linux"
+ID=alpine
+VERSION_ID=3.11.3
+PRETTY_NAME="Alpine Linux v3.11"
+HOME_URL="https://alpinelinux.org/"
+BUG_REPORT_URL="https://bugs.alpinelinux.org/"
+#+end_example
+
+** local ip address
+
+#+begin_src shell
+export AUDIT_LOGGER=$(kubectl --kubeconfig $VCKUBECONFIG get pods -oname | grep audit | awk -F '/' '{print $2}')
+kubectl --kubeconfig $VCKUBECONFIG exec $AUDIT_LOGGER -- ip a s eth0
+#+end_src
+
+#+RESULTS:
+#+begin_example
+766: eth0@if767: <BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue state UP qlen 1000
+    link/ether 8e:60:bd:41:e4:0b brd ff:ff:ff:ff:ff:ff
+    inet 10.0.0.169/32 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::8c60:bdff:fe41:e40b/64 scope link
+       valid_lft forever preferred_lft forever
+#+end_example
+
+** listening ports
+
+#+begin_src shell
+export AUDIT_LOGGER=$(kubectl --kubeconfig $VCKUBECONFIG get pods -oname | grep audit | awk -F '/' '{print $2}')
+kubectl --kubeconfig $VCKUBECONFIG exec $AUDIT_LOGGER -- netstat -tnlp
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 :::9900                 :::*                    LISTEN      1/node
+#+end_example
+
+* check services
+** vcluster
+
+#+begin_src shell
+kubectl --kubeconfig $VCKUBECONFIG get svc -A
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAMESPACE     NAME                      TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                  AGE
+default       kubernetes                ClusterIP   10.100.53.25     <none>        443/TCP                  23m
+default       snoopdb                   ClusterIP   10.108.7.20      <none>        5432/TCP                 21m
+flux-system   notification-controller   ClusterIP   10.96.189.149    <none>        80/TCP                   22m
+flux-system   source-controller         ClusterIP   10.100.218.28    <none>        80/TCP                   22m
+flux-system   webhook-receiver          ClusterIP   10.104.176.181   <none>        80/TCP                   22m
+kube-system   kube-dns                  ClusterIP   10.110.62.106    <none>        53/UDP,53/TCP,9153/TCP   23m
+#+end_example
+
+** host cluster
+
+#+begin_src shell
+kubectl --kubeconfig $KUBECONFIG get svc -A | grep 10.96.96.96
+#+end_src
+
+#+RESULTS:
+#+begin_example
+hh                                     auditlogger-x-default-x-k8s-hh                       ClusterIP      10.96.96.96      <none>            9900/TCP                     7h39m
+#+end_example
+* check auditlogger
+#+begin_src shell
+USER=hh
+curl http://auditlogger-x-default-x-k8s-$USER.$USER:9900
+#+end_src
+* check postgresq
+#+begin_src shell
+USER=hh
+psql --host snoopdb-x-default-x-k8s-$USER.$USER --user apisnoop -c 'select count(*) from testing.audit_event;'
+#+end_src
