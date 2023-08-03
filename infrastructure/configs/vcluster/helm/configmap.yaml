@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: k8s-hh-audit
+  name: k8s-heyste-audit
 data:
   sink.yaml: |
     apiVersion: v1
