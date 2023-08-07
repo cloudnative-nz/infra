@@ -8,8 +8,8 @@ metadata:
 spec:
   targetNamespace: minio-operator
   releaseName: minio-operator
-  install:
-    createNamespace: true
+  # install:
+  #   createNamespace: true
   storageNamespace: flux-system
   maxHistory: 10
   interval: 30m
