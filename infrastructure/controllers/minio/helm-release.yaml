@@ -22,6 +22,7 @@ spec:
         kind: HelmRepository
         name: minio
         namespace: flux-system
+  # https://github.com/minio/operator/blob/master/helm/operator/values.yaml
   values:
     console:
       ingress:
@@ -29,9 +30,9 @@ spec:
         ingressClassName: nginx
         host: ${MINIO_INGRESS_HOST:=minio.example.com}
         tls:
+          secretName: wildcard-tls
           hosts:
             - ${MINIO_INGRESS_HOST:=minio.example.com}
-          secretName: wildcard-tls
       env:
         - name: CONSOLE_DEBUG_ENV
           value: "true"
@@ -39,5 +40,3 @@ spec:
       env:
         - name: DEBUG_ENV_VAR
           value: "true"
-    # https://github.com/minio/operator/blob/master/helm/operator/values.yaml
-    setme: true
