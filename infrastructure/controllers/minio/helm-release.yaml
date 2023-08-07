@@ -30,10 +30,9 @@ spec:
         ingressClassName: nginx
         host: ${MINIO_INGRESS_HOST:=minio.example.com}
         tls:
-          secretName: wildcard-tls
-          hosts:
-            - host: ${MINIO_INGRESS_HOST:=minio.example.com}
-              secretName: wildcard-tls
+          - secretName: wildcard-tls
+            hosts:
+              - ${MINIO_INGRESS_HOST:=minio.example.com}
       env:
         - name: CONSOLE_DEBUG_ENV
           value: "true"
