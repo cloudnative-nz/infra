@@ -5,6 +5,7 @@ resources:
   - capi.yaml
   - nginx.yaml
   - longhorn.yaml
+  - minio.yaml
   - gitops.yaml
   - cert-manager.yaml
   - external-dns.yaml
