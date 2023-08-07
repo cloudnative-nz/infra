@@ -32,7 +32,8 @@ spec:
         tls:
           secretName: wildcard-tls
           hosts:
-            - ${MINIO_INGRESS_HOST:=minio.example.com}
+            - host: ${MINIO_INGRESS_HOST:=minio.example.com}
+              secretName: wildcard-tls
       env:
         - name: CONSOLE_DEBUG_ENV
           value: "true"
