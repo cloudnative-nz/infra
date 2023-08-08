@@ -13,4 +13,4 @@ spec:
     name: flux-system
   postBuild:
     substitute:
-      MINIO_INGRESS_HOST: minio.cloudnative.nz
+      MINIO_INGRESS_HOST: minio-operator.cloudnative.nz
