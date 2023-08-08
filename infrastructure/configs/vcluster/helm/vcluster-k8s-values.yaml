@@ -1,0 +1,326 @@
+defaultImageRegistry: ""
+
+globalAnnotations: {}
+
+headless: false
+
+enableHA: false
+
+plugin: {}
+
+sync:
+  services:
+    enabled: true
+  configmaps:
+    enabled: true
+    all: false
+  secrets:
+    enabled: true
+    all: false
+  endpoints:
+    enabled: true
+  pods:
+    enabled: true
+    ephemeralContainers: false
+    status: false
+  events:
+    enabled: true
+  persistentvolumeclaims:
+    enabled: true
+  ingresses:
+    enabled: false
+  ingressclasses: {}
+  fake-nodes:
+  fake-persistentvolumes:
+  nodes:
+    fakeKubeletIPs: true
+    enabled: false
+    syncAllNodes: false
+    nodeSelector: ""
+    enableScheduler: false
+    syncNodeChanges: false
+  persistentvolumes:
+    enabled: false
+  storageclasses:
+    enabled: false
+  hoststorageclasses:
+    enabled: false
+  priorityclasses:
+    enabled: false
+  networkpolicies:
+    enabled: false
+  volumesnapshots:
+    enabled: false
+  poddisruptionbudgets:
+    enabled: false
+  serviceaccounts:
+    enabled: false
+  generic:
+    config: |-
+      ---
+
+fallbackHostDns: false
+
+mapServices:
+  fromVirtual: []
+  fromHost: []
+
+proxy:
+  metricsServer:
+    nodes:
+      enabled: false
+    pods:
+      enabled: false
+
+hostpathMapper:
+  enabled: false
+  resources: {}
+
+syncer:
+  extraArgs: []
+  volumeMounts:
+    - mountPath: /pki
+      name: certs
+      readOnly: true
+  extraVolumeMounts: []
+  env: []
+  livenessProbe:
+    enabled: true
+  readinessProbe:
+    enabled: true
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+    requests:
+      cpu: 20m
+      memory: 64Mi
+  volumes: []
+  replicas: 1
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+  labels: {}
+  annotations: {}
+  podAnnotations: {}
+  podLabels: {}
+  priorityClassName: ""
+  kubeConfigContextName: "my-vcluster"
+  securityContext: {}
+  serviceAnnotations: {}
+
+etcd:
+  image: registry.k8s.io/etcd:3.5.6-0
+  replicas: 1
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+  labels: {}
+  annotations: {}
+  podAnnotations: {}
+  podLabels: {}
+  resources:
+    requests:
+      cpu: 20m
+      memory: 150Mi
+  storage:
+    persistence: true
+    size: 5Gi
+  priorityClassName: ""
+  securityContext: {}
+  serviceAnnotations: {}
+  
+controller:
+  image: registry.k8s.io/kube-controller-manager:v1.26.1
+  replicas: 1
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+  labels: {}
+  annotations: {}
+  podAnnotations: {}
+  podLabels: {}
+  resources:
+    requests:
+      cpu: 15m
+  priorityClassName: ""
+  securityContext: {}
+scheduler:
+  image: registry.k8s.io/kube-scheduler:v1.26.1
+  replicas: 1
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+  labels: {}
+  annotations: {}
+  podAnnotations: {}
+  podLabels: {}
+  resources:
+    requests:
+      cpu: 10m
+  priorityClassName: ""
+
+api:
+  image: registry.k8s.io/kube-apiserver:v1.26.1
+  extraArgs: []
+  replicas: 1
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+  labels: {}
+  annotations: {}
+  podAnnotations: {}
+  podLabels: {}
+  resources:
+    requests:
+      cpu: 40m
+      memory: 300Mi
+  priorityClassName: ""
+  securityContext: {}
+  serviceAnnotations: {}
+  
+serviceAccount:
+  create: true
+
+workloadServiceAccount:
+  annotations: {}
+
+rbac:
+  clusterRole:
+    create: false
+  role:
+    create: true
+    extended: false
+
+service:
+  type: ClusterIP
+
+  externalIPs: []
+
+  externalTrafficPolicy: ""
+
+  loadBalancerIP: ""
+  loadBalancerSourceRanges: []
+  loadBalancerClass: ""
+
+job:
+  enabled: true
+  volumes: []
+  volumeMounts: []
+  extraArgs: []
+  priorityClassName: ""
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+  resources: {}
+  podAnnotations: {}
+  podLabels: {}
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+
+ingress:
+  enabled: false
+  pathType: ImplementationSpecific
+  apiVersion: networking.k8s.io/v1
+  ingressClassName: ""
+  host: vcluster.local
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+
+openshift:
+  enable: false
+
+coredns:
+  enabled: true
+  replicas: 1
+  service:
+    type: ClusterIP
+    externalIPs: []
+    externalTrafficPolicy: ""
+    annotations: {}
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 170Mi
+    requests:
+      cpu: 3m
+      memory: 16Mi
+  podAnnotations: {}
+  podLabels: {}
+
+isolation:
+  enabled: false
+  namespace: null
+
+  podSecurityStandard: baseline
+
+  nodeProxyPermission:
+    enabled: false
+
+  resourceQuota:
+    enabled: true
+    quota:
+      requests.cpu: 10
+      requests.memory: 20Gi
+      requests.storage: "100Gi"
+      requests.ephemeral-storage: 60Gi
+      limits.cpu: 20
+      limits.memory: 40Gi
+      limits.ephemeral-storage: 160Gi
+      services.nodeports: 0
+      services.loadbalancers: 1
+      count/endpoints: 40
+      count/pods: 20
+      count/services: 20
+      count/secrets: 100
+      count/configmaps: 100
+      count/persistentvolumeclaims: 20
+    scopeSelector:
+      matchExpressions:
+    scopes:
+
+  limitRange:
+    enabled: true
+    default:
+      ephemeral-storage: 8Gi
+      memory: 512Mi
+      cpu: "1"
+    defaultRequest:
+      ephemeral-storage: 3Gi
+      memory: 128Mi
+      cpu: 100m
+
+  networkPolicy:
+    enabled: true
+    outgoingConnections:
+      ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+          - 100.64.0.0/10
+          - 127.0.0.0/8
+          - 10.0.0.0/8
+          - 172.16.0.0/12
+          - 192.168.0.0/16
+
+init:
+  manifests: |-
+    ---
+  manifestsTemplate: ''
+  helm: []
+
+multiNamespaceMode:
+  enabled: false
+
+telemetry:
+  disabled: "false"
+  instanceCreator: "helm"
+  instanceCreatorUID: ""
