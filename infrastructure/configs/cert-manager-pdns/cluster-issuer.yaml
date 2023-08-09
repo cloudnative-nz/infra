@@ -31,9 +31,17 @@ spec:
             solverName: pdns
             config:
               # zone: example.com # (Optional): When not provided the Zone will obtained by cert-manager's ResolvedZone
-              secretName: pdns
-              zoneName: cloudnative.nz.
-              apiUrl: https://powerdns.ii.nz
+              host: https://powerdns.ii.nz
+              serverID: "localhost"
+              ttl: 60
+              headers:
+                hello: "there"
+              allowed-zones:
+                - cloudnative.nz.
+                - cloudnative.nz
+              apiKeySecretRef:
+                name: pdns
+                key: api-key
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
