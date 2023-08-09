@@ -547,6 +547,28 @@ We need to encrypt the pdns-secret with sops and commit/push so flux can decrypt
 sops --encrypt --in-place ./secrets/external-dns-rfc2136.yaml
 #+end_src
 
+* PDNS api Secret
+https://github.com/zachomedia/cert-manager-webhook-pdns#powerdns-cert-manager-acme-webhook
+Create one here with only access to cloudnative.nz
+https://powerdns.ii.nz/admin/manage-keys
+** cert-manager
+*** create pdns secret
+Note that the TSIG_KEY we retrieve is base64 encoded... it get's double encoded as a kubernetes secret. Most places you use a TSIG_KEY are expecting the base64 value we have here.
+#+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\nexport KUBECONFIG\n" :sync :results silent
+source .envrc
+kubectl -n cert-manager \
+    create secret generic pdns \
+    --from-literal=api-key="$PDNS_API_KEY" \
+    --dry-run=client -o yaml > \
+     ./secrets/cert-manager-pdns.yaml
+#+end_src
+
+*** encrypt pdns secret
+We need to encrypt the pdns-secret with sops and commit/push so flux can decrypt and apply it
+#+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\n" :results silent :sync
+sops --encrypt --in-place ./secrets/cert-manager-pdns.yaml
+#+end_src
+
 * TODO gitops
 ** dashboard
 *** ensure GITOPS_PASSWORD is set
