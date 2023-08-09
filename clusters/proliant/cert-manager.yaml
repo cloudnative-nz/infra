@@ -33,7 +33,7 @@ spec:
   dependsOn:
     - name: cert-manager
   interval: 5m
-  path: "./infrastructure/configs/cert-manager"
+  path: "./infrastructure/configs/cert-manager-rfc2136"
   prune: true
   sourceRef:
     kind: GitRepository
