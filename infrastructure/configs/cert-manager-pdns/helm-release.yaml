@@ -7,7 +7,7 @@ metadata:
   namespace: flux-system
 spec:
   targetNamespace: cert-manager
-  releaseName: cert-manager
+  releaseName: cert-manager-webhook-pdns
   # namespace needs to be precrated with rfc2136 secret
   install:
     createNamespace: false
@@ -18,7 +18,7 @@ spec:
   #   - name: ingress-nginx
   chart:
     spec:
-      chart: cert-manager-webhook-pdn
+      chart: cert-manager-webhook-pdns
       version: "3.1.1"
       sourceRef:
         kind: HelmRepository
@@ -27,4 +27,4 @@ spec:
       interval: 12h
   # https://github.com/zachomedia/cert-manager-webhook-pdns/blob/main/deploy/cert-manager-webhook-pdns/values.yaml
   values:
-    groupName: acme.ii.nz
+    groupName: acme.cloudnative.nz
