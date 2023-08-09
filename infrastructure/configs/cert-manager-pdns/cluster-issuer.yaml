@@ -71,6 +71,7 @@ spec:
               headers:
                 hello: "there"
               allowed-zones:
+                - cloudnative.nz.
                 - cloudnative.nz
               apiKeySecretRef:
                 name: pdns
