@@ -1,0 +1,70 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-pdns
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+
+    # Email address used for ACME registration
+    email: ${ACME_EMAIL:=acme@ii.coop}
+
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt
+    # https://cert-manager.io/docs/reference/api-docs/#acme.cert-manager.io/v1.ACMEIssuerDNS01ProviderRFC2136
+    # https://cert-manager.io/docs/reference/api-docs/#acme.cert-manager.io/v1.ACMEIssuerDNS01ProviderWebhook
+    # pdnsutil activate-tsig-key abcs.news sharing.io master # for each domain
+    solvers:
+      # - selector:
+      #     dnsNames:
+      #       - "*.${DOMAIN:=ii.nz}"
+      #       - "${DOMAIN:=ii.nz}"
+      # https://cert-manager.io/docs/configuration/acme/dns01/
+      - dns01:
+          webhook:
+            # This group needs to be configured when installing the helm package, otherwise the webhook won't have permission to create an ACME challenge for this API group.
+            groupName: acme.cloudnative.nz
+            solverName: pdns
+            config:
+              # zone: example.com # (Optional): When not provided the Zone will obtained by cert-manager's ResolvedZone
+              secretName: pdns
+              zoneName: cloudnative.nz.
+              apiUrl: https://powerdns.ii.nz
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-pdns-staging
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+
+    # Email address used for ACME registration
+    email: ${ACME_EMAIL:=acme@ii.coop}
+
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt
+    # https://cert-manager.io/docs/reference/api-docs/#acme.cert-manager.io/v1.ACMEIssuerDNS01ProviderRFC2136
+    # pdnsutil activate-tsig-key abcs.news sharing.io master # for each domain
+    solvers:
+      # - selector:
+      #     dnsNames:
+      #       - "*.${DOMAIN:=ii.nz}"
+      #       - "${DOMAIN:=ii.nz}"
+      - dns01:
+          webhook:
+            # This group needs to be configured when installing the helm package, otherwise the webhook won't have permission to create an ACME challenge for this API group.
+            groupName: acme.cloudnative.nz
+            solverName: pdns
+            config:
+              # zone: example.com # (Optional): When not provided the Zone will obtained by cert-manager's ResolvedZone
+              secretName: pdns
+              zoneName: cloudnative.nz.
+              apiUrl: https://powerdns.ii.nz

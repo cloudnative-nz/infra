@@ -27,7 +27,7 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: certificates
+  name: certificates-rfc2136
   namespace: flux-system
 spec:
   dependsOn:
@@ -46,3 +46,22 @@ spec:
       RFC2136_NAMESERVER: 123.253.176.253
       RFC2136_TSIG_KEYNAME: cloudnative.nz
       RFC2136_TSIG_ALGORITHM: HMACSHA256
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: certificates-pdns
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: cert-manager
+  interval: 5m
+  path: "./infrastructure/configs/cert-manager-pdns"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  postBuild:
+    substitute:
+      ACME_EMAIL: cloudnative@ii.coop
+      DOMAIN: cloudnative.nz

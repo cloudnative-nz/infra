@@ -1,0 +1,30 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+# https://fluxcd.io/flux/components/helm/helmreleases/#specification
+metadata:
+  name: cert-manager-webhook-pdns
+  namespace: flux-system
+spec:
+  targetNamespace: cert-manager
+  releaseName: cert-manager
+  # namespace needs to be precrated with rfc2136 secret
+  install:
+    createNamespace: false
+  storageNamespace: flux-system
+  maxHistory: 10
+  interval: 30m
+  # dependsOn:
+  #   - name: ingress-nginx
+  chart:
+    spec:
+      chart: cert-manager-webhook-pdn
+      version: "3.1.1"
+      sourceRef:
+        kind: HelmRepository
+        name: cert-manager-webhook-pdns
+        namespace: flux-system
+      interval: 12h
+  # https://github.com/zachomedia/cert-manager-webhook-pdns/blob/main/deploy/cert-manager-webhook-pdns/values.yaml
+  values:
+    groupName: acme.ii.nz
