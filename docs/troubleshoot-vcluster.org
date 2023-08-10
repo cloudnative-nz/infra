@@ -266,3 +266,55 @@ kubectl --kubeconfig $CNNZ_KUBECONFIG -n $USER debug -it $USER_APISERVER --image
 #+begin_src tmux :results silent :session cnnz:cluster
 kubectl --kubeconfig $CNNZ_KUBECONFIG -n $USER debug -it $USER_APISERVER --image=rochaporto/swiss-knife:latest --target=kube-apiserver -- tcpdump -i eth0 -vvvS port 6443
 #+end_src
+
+** check apiserver for audit sink traffic
+
+#+begin_src tmux :results silent :session cnnz:cluster
+kubectl --kubeconfig $CNNZ_KUBECONFIG -n $USER debug -it $USER_APISERVER --image=rochaporto/swiss-knife:latest --target=kube-apiserver -- tcpdump -i eth0 -c10  port 9900
+#+end_src
+
+** debug user apiserver with bash
+
+#+begin_src tmux :results silent :session cnnz:cluster
+kubectl --kubeconfig $CNNZ_KUBECONFIG -n $USER debug -it $USER_APISERVER --image=rochaporto/swiss-knife:latest --target=kube-apiserver -- bash
+#+end_src
+
+#+begin_example
+root@k8s-heyste-api-6ffbd56fc4-g4f8w:/# ps aux | cat
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root           1  8.9  0.2 1244388 448472 ?      Ssl  Aug08 171:49 kube-apiserver --advertise-address=0.0.0.0 --allow-privileged=true --authorization-mode=RBAC --client-ca-file=/run/config/pki/ca.crt --enable-bootstrap-token-auth=true --etcd-cafile=/run/config/pki/etcd-ca.crt --etcd-certfile=/run/config/pki/apiserver-etcd-client.crt --etcd-keyfile=/run/config/pki/apiserver-etcd-client.key --etcd-servers=https://k8s-heyste-etcd:2379 --proxy-client-cert-file=/run/config/pki/front-proxy-client.crt --proxy-client-key-file=/run/config/pki/front-proxy-client.key --requestheader-allowed-names=front-proxy-client --requestheader-client-ca-file=/run/config/pki/front-proxy-ca.crt --requestheader-extra-headers-prefix=X-Remote-Extra- --requestheader-group-headers=X-Remote-Group --requestheader-username-headers=X-Remote-User --secure-port=6443 --service-account-issuer=https://kubernetes.default.svc.cluster.local --service-account-key-file=/run/config/pki/sa.pub --service-account-signing-key-file=/run/config/pki/sa.key --service-cluster-ip-range=10.96.0.0/12 --tls-cert-file=/run/config/pki/apiserver.crt --tls-private-key-file=/run/config/pki/apiserver.key --watch-cache=false --endpoint-reconciler-type=none --audit-policy-file=/etc/kubernetes/audit/policy.yaml --audit-webhook-config-file=/etc/kubernetes/audit/sink.yaml
+#+end_example
+
+#+begin_example
+root@k8s-heyste-api-6ffbd56fc4-g4f8w:/proc/1/root# cat etc/kubernetes/audit/sink.yaml
+apiVersion: v1
+kind: Config
+current-context: auditsink-context
+clusters:
+  - name: auditsink-cluster
+    cluster:
+      server: http://auditlogger-x-default-k8s-heyste.heyste:9900/events
+contexts:
+  - context:
+      user: ""
+      cluster: auditsink-cluster
+    name: auditsink-context
+users: []
+preferences: {}
+#+end_example
+
+#+begin_example
+root@k8s-heyste-api-6ffbd56fc4-g4f8w:/proc/1/root# apt update && apt install curl
+#+end_example
+
+#+begin_example
+root@k8s-heyste-api-6ffbd56fc4-g4f8w:/proc/1/root# curl http://auditlogger-x-default-k8s-heyste.heyste:9900/events
+curl: (6) Could not resolve host: auditlogger-x-default-k8s-heyste.heyste
+#+end_example
+
+#+begin_example
+root@k8s-heyste-api-6ffbd56fc4-g4f8w:/proc/1/root# cat etc/resolv.conf
+search heyste.svc.cluster.local svc.cluster.local cluster.local
+nameserver 10.96.0.10
+options ndots:5
+#+end_example
