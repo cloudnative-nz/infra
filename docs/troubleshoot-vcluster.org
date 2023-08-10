@@ -1,0 +1,174 @@
+#+title: Troubleshoot vCluster / apisnoop
+#+CREATOR: ii.nz
+#+PROPERTY: header-args:shell :exports both
+#+PROPERTY: header-args:shell+ :async true
+#+PROPERTY: header-args:shell+ :eval no-export
+#+PROPERTY: header-args:shell+ :var KUBECONFIG=(concat (getenv "HOME") "/.kube/config-cloudnative.nz")
+#+PROPERTY: header-args:shell+ :var VCKUBECONFIG=(concat (getenv "HOME") "/.kube/config-" (getenv "USER") "-cloudnative.nz.conf")
+#+PROPERTY: header-args:shell+ :var NAMESPACE=(getenv "USER")
+#+PROPERTY: header-args:shell+ :prologue "exec 2>&1\nexport KUBECONFIG VCKUBECONFIG"
+#+PROPERTY: header-args:shell+ :epilogue ":\n"
+#+PROPERTY: header-args:tmux :session ":default"
+
+* Summary
+
+- We want provide a clear process to check (with tcpdump) if "live events" are getting sent to the apisnoop auditlogger.
+- Using a debug container is the easiest option but it requires that the apisnoop pod not be a static pod.
+- Testing it first with a kind before checking if it works with vcluster
+- https://github.com/heyste/apisnoop/blob/debug-live-events/kind/kind%2Bapisnoop.yaml
+
+* Custom kind/snoop setup
+** boot cluster
+
+#+begin_src tmux :results silent :session kind:boot
+git clone --depth 1 --single-branch --branch debug-live-events https://github.com/heyste/apisnoop.git /tmp/debug-live-events
+cd /tmp/debug-live-events/kind
+kind create cluster --config kind+apisnoop.yaml
+#+end_src
+
+** check pods
+
+#+begin_src tmux :results silent :session kind:pods
+kubectl get pods -A -owide
+#+end_src
+
+** install apisnoop
+
+#+begin_src tmux :results silent :session kind:boot
+docker exec kind-control-plane kubectl apply -f /opt/apisnoop.yaml
+#+end_src
+
+** watch apisnoop start
+
+#+begin_src tmux :results silent :session kind:pods
+watch kubectl get pods -owide
+#+end_src
+
+** check svc
+
+#+begin_src tmux :results silent :session kind:svc
+kubectl get svc -A
+#+end_src
+
+** create kind-sink service
+
+#+begin_src tmux :results silent :session kind:svc
+kubectl create -n default -f - <<EOF
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kind-auditsink
+spec:
+  type: ClusterIP
+  clusterIP: 10.96.96.96
+  ports:
+    - name: http
+      port: 9900
+      protocol: TCP
+      targetPort: http
+  selector:
+    app.kubernetes.io/name: apisnoop
+  type: ClusterIP
+EOF
+#+end_src
+
+** check svc
+
+#+begin_src tmux :results silent :session kind:svc
+kubectl get svc -A
+#+end_src
+
+** check endpoints
+
+#+begin_src tmux :results silent :session kind:endpoints
+kubectl get endpoints -A
+#+end_src
+
+** check yaml if needed
+*** get apisnoop yaml
+
+#+begin_src tmux :results silent :session kind:apisnoop
+kubectl get pod apisnoop -oyaml | head -15
+#+end_src
+
+*** get svc kind-sink yaml
+
+#+begin_src tmux :results silent :session kind:svc
+kubectl get svc kind-auditsink -oyaml | head -15
+#+end_src
+
+** exec apisnoop pod
+*** select result
+
+#+begin_src tmux :results silent :session kind:exec
+kubectl -n default exec apisnoop -c snoopdb -- psql --username apisnoop --host localhost -c 'select 1;'
+#+end_src
+
+*** check snoop tables
+
+#+begin_src tmux :results silent :session kind:exec
+kubectl -n default exec apisnoop -c snoopdb -- psql --username apisnoop --host localhost -c '\d+'
+#+end_src
+
+*** check for live events
+
+#+begin_src tmux :results silent :session kind:exec
+kubectl -n default exec apisnoop -c snoopdb -- psql --username apisnoop --host localhost -c 'select count(*) from testing.audit_event;'
+#+end_src
+
+*** display live event
+
+#+begin_src tmux :results silent :session kind:exec
+kubectl -n default exec apisnoop -c snoopdb -- psql --username apisnoop --host localhost -c 'select count(*) from testing.audit_event; select * from testing.audit_event limit 1;'
+#+end_src
+
+*** check auditlogger via debug container
+
+- https://kccncna2022.sched.com/event/182Lh
+- May need to run this twice
+
+#+begin_src tmux :results silent :session kind:exec
+kubectl -n default debug -it apisnoop --image=rochaporto/swiss-knife:latest --target=auditlogger -- ps aux | cat
+#+end_src
+
+*** scan for events from apiserver
+
+- https://www.middlewareinventory.com/blog/tcpdump-capture-http-get-post-requests-apache-weblogic-websphere/
+
+#+begin_src tmux :results silent :session kind:exec
+kubectl -n default debug -it apisnoop --image=rochaporto/swiss-knife:latest --target=auditlogger -- tcpdump -i eth0 -s 0 -A 'tcp[((tcp[12:1] & 0xf0) >> 2):4] = 0x504F5354'
+#+end_src
+
+* Confirm remote cluster
+
+#+begin_src shell :exports both
+kubectl get nodes -owide
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAME   STATUS   ROLES           AGE   VERSION   INTERNAL-IP       EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+srv1   Ready    control-plane   23d   v1.27.3   123.253.178.101   <none>        Ubuntu 22.04.2 LTS   5.15.0-76-generic   containerd://1.6.21
+#+end_example
+
+* Review vcluster state
+** set VCKUBECONFIG
+
+#+begin_src tmux :results silent :session vcluster:cluster
+export VCKUBECONFIG=${HOME}/.kube/config-${USER}-cloudnative.nz.conf
+echo $VCKUBECONFIG
+#+end_src
+
+** check pods
+
+#+begin_src tmux :results silent :session vcluster:cluster
+kubectl --kubeconfig $VCKUBECONFIG get pods -A
+#+end_src
+
+** check svc
+
+#+begin_src tmux :results silent :session vcluster:cluster
+kubectl --kubeconfig $VCKUBECONFIG get svc -A
+#+end_src
+

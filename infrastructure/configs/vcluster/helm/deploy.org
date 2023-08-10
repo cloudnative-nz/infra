@@ -18,7 +18,7 @@ kubectl get nodes -owide
 #+RESULTS:
 #+begin_example
 NAME   STATUS   ROLES           AGE   VERSION   INTERNAL-IP       EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
-srv1   Ready    control-plane   16d   v1.27.3   123.253.178.101   <none>        Ubuntu 22.04.2 LTS   5.15.0-76-generic   containerd://1.6.21
+srv1   Ready    control-plane   22d   v1.27.3   123.253.178.101   <none>        Ubuntu 22.04.2 LTS   5.15.0-76-generic   containerd://1.6.21
 #+end_example
 
 * check out the configmap
@@ -148,11 +148,6 @@ data:
 EOF
 #+end_src
 
-#+RESULTS:
-#+begin_example
-configmap/k8s-audit configured
-#+end_example
-
 * deploy k8s-audit service
 Be sure and set the name
 
@@ -174,10 +169,11 @@ spec:
     app.kubernetes.io/name: auditlogger
   type: ClusterIP
 EOF
+#+end_src
 
 #+RESULTS:
 #+begin_example
-configmap/k8s-heyste-audit created
+service/k8s-audit created
 #+end_example
 
 * setup custom values for helm
@@ -212,21 +208,21 @@ helm upgrade k8s-$USER vcluster-k8s --repo https://charts.loft.sh --version 0.15
 
 #+RESULTS:
 #+begin_example
-Release "k8s-hh" does not exist. Installing it now.
-NAME: k8s-hh
-LAST DEPLOYED: Thu Aug  3 11:34:51 2023
-NAMESPACE: hh
+Release "k8s-heyste" does not exist. Installing it now.
+NAME: k8s-heyste
+LAST DEPLOYED: Wed Aug  9 11:46:44 2023
+NAMESPACE: heyste
 STATUS: deployed
 REVISION: 1
 TEST SUITE: None
 NOTES:
 Thank you for installing vcluster.
 
-Your vcluster is named k8s-hh in namespace hh.
+Your vcluster is named k8s-heyste in namespace heyste.
 
 To connect to the vcluster, use vcluster CLI (https://www.vcluster.com/docs/getting-started/setup):
-  $ vcluster connect k8s-hh -n hh
-  $ vcluster connect k8s-hh -n hh -- kubectl get ns
+  $ vcluster connect k8s-heyste -n heyste
+  $ vcluster connect k8s-heyste -n heyste -- kubectl get ns
 
 
 For more information, please take a look at the vcluster docs at https://www.vcluster.com/docs
@@ -290,44 +286,44 @@ kubectl --kubeconfig $VCKUBECONFIG apply -f \
 
 #+RESULTS:
 #+begin_example
-namespace/flux-system unchanged
-resourcequota/critical-pods configured
-customresourcedefinition.apiextensions.k8s.io/alerts.notification.toolkit.fluxcd.io unchanged
-customresourcedefinition.apiextensions.k8s.io/buckets.source.toolkit.fluxcd.io unchanged
-customresourcedefinition.apiextensions.k8s.io/gitrepositories.source.toolkit.fluxcd.io unchanged
-customresourcedefinition.apiextensions.k8s.io/helmcharts.source.toolkit.fluxcd.io unchanged
-customresourcedefinition.apiextensions.k8s.io/helmreleases.helm.toolkit.fluxcd.io unchanged
-customresourcedefinition.apiextensions.k8s.io/helmrepositories.source.toolkit.fluxcd.io unchanged
-customresourcedefinition.apiextensions.k8s.io/imagepolicies.image.toolkit.fluxcd.io unchanged
-customresourcedefinition.apiextensions.k8s.io/imagerepositories.image.toolkit.fluxcd.io unchanged
-customresourcedefinition.apiextensions.k8s.io/imageupdateautomations.image.toolkit.fluxcd.io unchanged
-customresourcedefinition.apiextensions.k8s.io/kustomizations.kustomize.toolkit.fluxcd.io unchanged
-customresourcedefinition.apiextensions.k8s.io/ocirepositories.source.toolkit.fluxcd.io unchanged
-customresourcedefinition.apiextensions.k8s.io/providers.notification.toolkit.fluxcd.io unchanged
-customresourcedefinition.apiextensions.k8s.io/receivers.notification.toolkit.fluxcd.io unchanged
-serviceaccount/helm-controller unchanged
-serviceaccount/image-automation-controller unchanged
-serviceaccount/image-reflector-controller unchanged
-serviceaccount/kustomize-controller unchanged
-serviceaccount/notification-controller unchanged
-serviceaccount/source-controller unchanged
-clusterrole.rbac.authorization.k8s.io/crd-controller unchanged
-clusterrole.rbac.authorization.k8s.io/flux-edit unchanged
-clusterrole.rbac.authorization.k8s.io/flux-view unchanged
-clusterrolebinding.rbac.authorization.k8s.io/cluster-reconciler unchanged
-clusterrolebinding.rbac.authorization.k8s.io/crd-controller unchanged
+namespace/flux-system created
+resourcequota/critical-pods created
+customresourcedefinition.apiextensions.k8s.io/alerts.notification.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/buckets.source.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/gitrepositories.source.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/helmcharts.source.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/helmreleases.helm.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/helmrepositories.source.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/imagepolicies.image.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/imagerepositories.image.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/imageupdateautomations.image.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/kustomizations.kustomize.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/ocirepositories.source.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/providers.notification.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/receivers.notification.toolkit.fluxcd.io created
+serviceaccount/helm-controller created
+serviceaccount/image-automation-controller created
+serviceaccount/image-reflector-controller created
+serviceaccount/kustomize-controller created
+serviceaccount/notification-controller created
+serviceaccount/source-controller created
+clusterrole.rbac.authorization.k8s.io/crd-controller created
+clusterrole.rbac.authorization.k8s.io/flux-edit created
+clusterrole.rbac.authorization.k8s.io/flux-view created
+clusterrolebinding.rbac.authorization.k8s.io/cluster-reconciler created
+clusterrolebinding.rbac.authorization.k8s.io/crd-controller created
 service/notification-controller created
 service/source-controller created
 service/webhook-receiver created
-deployment.apps/helm-controller configured
-deployment.apps/image-automation-controller configured
-deployment.apps/image-reflector-controller configured
-deployment.apps/kustomize-controller configured
-deployment.apps/notification-controller configured
-deployment.apps/source-controller configured
-networkpolicy.networking.k8s.io/allow-egress unchanged
-networkpolicy.networking.k8s.io/allow-scraping unchanged
-networkpolicy.networking.k8s.io/allow-webhooks unchanged
+deployment.apps/helm-controller created
+deployment.apps/image-automation-controller created
+deployment.apps/image-reflector-controller created
+deployment.apps/kustomize-controller created
+deployment.apps/notification-controller created
+deployment.apps/source-controller created
+networkpolicy.networking.k8s.io/allow-egress created
+networkpolicy.networking.k8s.io/allow-scraping created
+networkpolicy.networking.k8s.io/allow-webhooks created
 #+end_example
 
 * deploy apisnoop
@@ -336,13 +332,6 @@ networkpolicy.networking.k8s.io/allow-webhooks unchanged
 kubectl --kubeconfig $VCKUBECONFIG apply -f \
  https://raw.githubusercontent.com/cncf/apisnoop/vcluster/charts/flux-deploy.yaml
 #+end_src
-
-#+RESULTS:
-#+begin_example
-gitrepository.source.toolkit.fluxcd.io/apisnoop unchanged
-helmrelease.helm.toolkit.fluxcd.io/snoopdb unchanged
-helmrelease.helm.toolkit.fluxcd.io/auditlogger unchanged
-#+end_example
 
 * check helm releases
 
