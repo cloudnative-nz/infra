@@ -172,3 +172,72 @@ kubectl --kubeconfig $VCKUBECONFIG get pods -A
 kubectl --kubeconfig $VCKUBECONFIG get svc -A
 #+end_src
 
+** check auditlogger via debug container
+
+- debug containers don't look to be working from inside of vcluster
+
+#+begin_src tmux :results silent :session vcluster:cluster
+export AUDITLOGGER=$(kubectl --kubeconfig $VCKUBECONFIG get pod -oname | grep audit | awk -F '/' '{print $2}')
+echo $AUDITLOGGER
+#+end_src
+
+#+begin_src tmux :results silent :session vcluster:cluster
+kubectl --kubeconfig $VCKUBECONFIG debug -it $AUDITLOGGER --image=rochaporto/swiss-knife:latest --target=auditlogger -- ps aux | cat
+#+end_src
+
+* Review host cluster state
+** set KUBECONFIG
+
+#+begin_src tmux :results silent :session cnnz:cluster
+export CNNZ_KUBECONFIG=${HOME}/.kube/config-cloudnative.nz
+echo $CNNZ_KUBECONFIG
+#+end_src
+
+** check svc
+
+#+begin_src tmux :results silent :session cnnz:cluster
+kubectl --kubeconfig $CNNZ_KUBECONFIG -n $USER get svc -owide
+#+end_src
+
+** check endpoints
+
+#+begin_src tmux :results silent :session cnnz:cluster
+kubectl --kubeconfig $CNNZ_KUBECONFIG -n $USER get endpoints -owide
+#+end_src
+
+** check pods
+
+#+begin_src tmux :results silent :session cnnz:cluster
+kubectl --kubeconfig $CNNZ_KUBECONFIG -n $USER get pods -owide
+#+end_src
+
+** find user's auditlogger
+
+#+begin_src tmux :results silent :session cnnz:cluster
+export USER_AUDITLOGGER=$(kubectl --kubeconfig $CNNZ_KUBECONFIG get pods -oname -n $USER | grep audit | awk -F '/' '{print $2}')
+echo $USER_AUDITLOGGER
+#+end_src
+
+** check auditlogger with debug container
+
+#+begin_src tmux :results silent :session cnnz:cluster
+kubectl --kubeconfig $CNNZ_KUBECONFIG debug -it -n $USER $USER_AUDITLOGGER --image=rochaporto/swiss-knife:latest --target=auditlogger -- ps aux | cat
+#+end_src
+
+** check for live events for auditlogger
+
+- Check for get requests
+
+#+begin_src tmux :results silent :session cnnz:cluster
+kubectl --kubeconfig $CNNZ_KUBECONFIG debug -it -n $USER $USER_AUDITLOGGER --image=rochaporto/swiss-knife:latest --target=auditlogger -- tcpdump -i eth0 -s 0 -A 'tcp[((tcp[12:1] & 0xf0) >> 2):4] = 0x47455420'
+#+end_src
+
+- "User-Agent: kube-probe/1.27" events are seen
+
+** check for live events for auditlogger
+
+- No post events found
+
+#+begin_src tmux :results silent :session cnnz:cluster
+kubectl --kubeconfig $CNNZ_KUBECONFIG debug -it -n $USER $USER_AUDITLOGGER --image=rochaporto/swiss-knife:latest --target=auditlogger -- tcpdump -i eth0 -s 0 -A 'tcp[((tcp[12:1] & 0xf0) >> 2):4] = 0x504F5354'
+#+end_src
