@@ -241,3 +241,28 @@ kubectl --kubeconfig $CNNZ_KUBECONFIG debug -it -n $USER $USER_AUDITLOGGER --ima
 #+begin_src tmux :results silent :session cnnz:cluster
 kubectl --kubeconfig $CNNZ_KUBECONFIG debug -it -n $USER $USER_AUDITLOGGER --image=rochaporto/swiss-knife:latest --target=auditlogger -- tcpdump -i eth0 -s 0 -A 'tcp[((tcp[12:1] & 0xf0) >> 2):4] = 0x504F5354'
 #+end_src
+
+** find user's apiserver
+
+#+begin_src tmux :results silent :session cnnz:cluster
+export USER_APISERVER=$(kubectl --kubeconfig $CNNZ_KUBECONFIG get pods -oname -n $USER | grep $USER-api | awk -F '/' '{print $2}')
+echo $USER_APISERVER
+#+end_src
+
+** list apiserver spec
+
+#+begin_src tmux :results silent :session cnnz:cluster
+kubectl --kubeconfig $CNNZ_KUBECONFIG -n $USER get pod $USER_APISERVER -oyaml | yq .spec
+#+end_src
+
+** check apiserver with debug container
+
+#+begin_src tmux :results silent :session cnnz:cluster
+kubectl --kubeconfig $CNNZ_KUBECONFIG -n $USER debug -it $USER_APISERVER --image=rochaporto/swiss-knife:latest --target=kube-apiserver -- ps aux | cat
+#+end_src
+
+** check apiserver with tcpdump
+
+#+begin_src tmux :results silent :session cnnz:cluster
+kubectl --kubeconfig $CNNZ_KUBECONFIG -n $USER debug -it $USER_APISERVER --image=rochaporto/swiss-knife:latest --target=kube-apiserver -- tcpdump -i eth0 -vvvS port 6443
+#+end_src
