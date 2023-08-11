@@ -11,3 +11,4 @@ resources:
   # - external-dns.yaml
   - reflector.yaml
   - coder.yaml
+  - vcluster.yaml

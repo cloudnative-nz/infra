@@ -2,9 +2,9 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - helm-repo.yaml
-  - helm-release.yaml
-configMapGenerator:
-  - name: k8s-${CLUSTER_NAME:=iicluster-ii}-audit
-    files:
-      - sink.yaml=audit/sink.yaml
-      - policy.yaml=audit/policy.yaml
+#   - helm-release.yaml
+# configMapGenerator:
+#   - name: k8s-${CLUSTER_NAME:=iicluster-ii}-audit
+#     files:
+#       - sink.yaml=audit/sink.yaml
+#       - policy.yaml=audit/policy.yaml
