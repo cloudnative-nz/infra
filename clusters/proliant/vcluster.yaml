@@ -9,7 +9,7 @@ spec:
   interval: 5m
   # dependsOn:
   #   - name: longhorn
-  path: "./infrastructure/config/vcluster"
+  path: "./infrastructure/configs/vcluster"
   sourceRef:
     kind: GitRepository
     name: flux-system
