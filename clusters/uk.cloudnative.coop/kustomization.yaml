@@ -3,7 +3,7 @@ kind: Kustomization
 resources:
   - secrets.yaml
   - nginx.yaml
-  - cert-manager.yaml
+  # - cert-manager.yaml
   # - gitops.yaml
   # - longhorn.yaml
   # - minio.yaml
