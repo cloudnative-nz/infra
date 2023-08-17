@@ -32,4 +32,4 @@ spec:
       GITOPS_INGRESS_HOST: gitops.uk.cloudnative.coop
       GITOPS_USERNAME: uk
       # echo "$GITOPS_PASSWORD" | gitops get bcrypt-hash
-      GITOPS_PASSWORDHASH: "$2a$10$hR.6sOB7EpYy/kVbW/bHnOnTx0AejWqm5JRqhr//.Fic37bYtebG2"
+      # GITOPS_PASSWORDHASH: "$2a$10$hR.6sOB7EpYy/kVbW/bHnOnTx0AejWqm5JRqhr//.Fic37bYtebG2"
