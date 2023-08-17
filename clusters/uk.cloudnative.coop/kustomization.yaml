@@ -6,9 +6,9 @@ resources:
   - cert-manager.yaml
   - gitops.yaml
   - longhorn.yaml
+  - coder.yaml
   # - minio.yaml
   # - reflector.yaml
-  # - coder.yaml
   # - vcluster.yaml
   # - external-dns.yaml
   # - capi.yaml
