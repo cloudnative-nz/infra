@@ -3,7 +3,7 @@ kind: Kustomization
 resources:
   - secrets.yaml
   # - capi.yaml
-  # - nginx.yaml
+  - nginx.yaml
   # - longhorn.yaml
   # - minio.yaml
   # - gitops.yaml
