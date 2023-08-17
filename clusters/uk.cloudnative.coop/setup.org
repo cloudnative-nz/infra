@@ -1,0 +1,982 @@
+# -*- org-return-follows-link: t; -*-
+#+TITLE: space.cloudnative.coop
+#+AUTHOR: Hippie Hacker
+#+EMAIL: hh@ii.coop
+#+DATE: 17th of Augest, 2023
+#+PROPERTY: header-args:bash+ :results replace verbatim code output
+#+PROPERTY: header-args:bash+ :var SPACE_TLD=(symbol-value 'space-domain)
+#+NOPROPERTY: header-args:bash+ :var TSOCKET=(symbol-value 'tmux-socket)
+#+PROPERTY: header-args:bash+ :dir (symbol-value 'tramp-dir)
+#+PROPERTY: header-args:bash+ :wrap example
+#+PROPERTY: header-args:bash+ :async
+#+PROPERTY: header-args:shell+ :results replace verbatim code output
+#+PROPERTY: header-args:shell+ :var SPACEDOMAIN=(symbol-value 'space-domain)
+#+PROPERTY: header-args:shell+ :var KUBECONFIG=(concat (getenv "HOME") "/.kube/config-" space-domain)
+#+NOPROPERTY: header-args:shell+ :var TSOCKET=(symbol-value 'tmux-socket)
+#+PROPERTY: header-args:shell+ :async
+#+NOPROPERTY: header-args:tmux+ :session "io:ssh"
+#+NOPROPERTY: header-args:tmux+ :socket (symbol-value 'tmux-socket)
+#+NOSTARTUP: content
+#+NOSTARTUP: overview
+#+NOSTARTUP: show2levels
+#+STARTUP: showeverything
+* WWW
+** Who?
+ii.nz team
+** What?
+Configure an Equinix Provided [[https://deploy.equinix.com/developers/docs/metal/hardware/standard-servers/#m3largex86][m3.large.x86]] into a single node kubernetes cluster.
+** Why?
+We want to serve up fast and local services for our cloud native friends in Europe.
+** Where?
+London [[https://deploy.equinix.com/developers/docs/metal/locations/metros/#europe-and-middle-east][Equinix Facility]]
+** How?
+Deploying Ubuntu + Kubernetes + flux + gitops + coder + some templates.
+* Inventory
+** Computer with Ubuntu
+In this case we created one using the Equinix [[https://deploy.equinix.com/developers/docs/metal/libraries/cli/][metal cli]].
+*** device creation
+:PROPERTIES:
+:header-args:shell+: :var KUBECONFIG="/Users/hh/.kube/config-sharing.io"
+:header-args:shell+: :var CODER_CONFIG_DIR="/Users/hh/.config/coder.cloudnative.coop"
+:header-args:tmux+: :session ":creation"
+:END:
+**** create
+#+begin_src tmux :prologue (concat "cd " default-directory "\n")
+metal device create \
+    --metro ld \
+    --plan m3.large.x86 \
+    --operating-system ubuntu_22_04 \
+    --hostname cp1.uk.cloudnative.coop \
+    --output yaml \
+    cp1.uk.cloudnative.coop
+#+end_src
+**** ip
+#+name: ip
+#+begin_src shell
+metal device get --filter hostname=cp1.uk.cloudnative.coop -o json | jq '.[0].ip_addresses[0].address' -r
+#+end_src
+
+#+RESULTS:
+#+begin_example
+145.40.113.209
+#+end_example
+**** id
+#+name: id
+#+begin_src shell
+metal device get --filter hostname=cp1.uk.cloudnative.coop -o json | jq -r '.[0].id'
+#+end_src
+
+#+RESULTS: id
+#+begin_example
+ac8e7d5c-b0f9-4d5a-b4e2-3826e3309a4f
+#+end_example
+**** facility
+#+name: facility
+#+begin_src shell
+metal device get --filter hostname=cp1.uk.cloudnative.coop -o json | jq -r '.[0].facility.code'
+#+end_src
+
+#+RESULTS: facility
+#+begin_example
+ld7
+#+end_example
+
+**** serial bios / hardware console access
+:PROPERTIES:
+:header-args:shell+: :var ID=eval-block("id")
+:header-args:shell+: :var FACILITY=eval-block("facility")
+# :header-args:tmux+: :prologue (concat "ID=" eval-block("id") "\nFACILITY=" eval-block("facility") "\n")
+:END:
+
+This will allow us to watch for any errors that come up, but usually is uneventful, just giving us an indecation of how far along we are.
+#+name: ssh_sos
+#+begin_src shell :var ID=eval-block("id") :var FACILITY=eval-block("facility") :wrap "src tmux :session \":ssh\""
+echo ssh $ID@sos.$FACILITY.platformequinix.com
+#+end_src
+
+#+RESULTS: ssh_sos
+#+begin_src tmux :session ":ssh"
+ssh ac8e7d5c-b0f9-4d5a-b4e2-3826e3309a4f@sos.ld7.platformequinix.com
+#+end_src
+
+** Domain
+NS Records and a separate tsig key are configured on powerdns.ii.nz
+#+name: spacedomain
+#+begin_src bash :wrap "example" :sync :cache yes
+echo -n $SPACE_TLD
+#+end_src
+
+#+RESULTS[8cb904ab81ee76020b82169c55cd7fc6654ea0a4]: spacedomain
+#+begin_example
+uk.cloudnative.coop
+#+end_example
+
+* Connect domain to our IP
+** What is our IP?
+#+begin_src shell
+metal device get --filter hostname=cp1.uk.cloudnative.coop -o json | jq '.[0].ip_addresses[0].address' -r
+#+end_src
+
+#+RESULTS:
+#+begin_example
+145.40.113.209
+#+end_example
+
+** Add DOMAIN -> Address pointing our IP
+We did this via the GUI, but here is the verified result.
+#+name: add main A record
+#+begin_src shell
+dig A $SPACE_TLD +short @ns.ii.nz
+#+end_src
+
+#+RESULTS: add main A record
+#+begin_example
+145.40.113.209
+#+end_example
+
+** Add *.DOMAIN -> Address pointing to our IP
+#+name: add wildcard A record
+#+begin_src shell
+dig A random123.$SPACE_TLD +short
+#+end_src
+
+#+RESULTS: add wildcard A record
+#+begin_example
+145.40.113.209
+#+end_example
+* Verify DNS + SSH Connectivity
+** ssh root@uk.cloudnative.coop
+You should be able to login with your password (or ssh key)
+#+begin_src tmux :prologue (concat "export SPACE_TLD=" space-domain "\n")
+ssh root@cp1.$SPACE_TLD
+#+end_src
+** ssh-import-id to ensure Hippie, Stephen, and Zach Have access
+#+begin_src tmux
+ssh-import-id gh:hh gh:iiamabby gh:heyste gh:zachmandeville gh:iiamabby
+#+end_src
+* install
+** trust packages from google, kubernetes, and docker
+#+begin_src tmux
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg \
+    | gpg --dearmor -o /etc/apt/trusted.gpg.d/google.gpg
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key \
+    | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/kubernetes-apt-keyring.gpg
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+    | gpg --dearmor -o /etc/apt/trusted.gpg.d/docker.gpg
+#+end_src
+** add repos from docker and googl
+#+begin_src tmux
+apt-add-repository "deb https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /" -y
+add-apt-repository "deb https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" -y
+apt-add-repository "deb http://packages.cloud.google.com/apt cloud-sdk main" -y
+#+end_src
+** ttyd tmux curl containerd
+#+begin_src tmux
+DEBIAN_FRONTENT=noninteractive apt-get install -y \
+    -o Dpkg::Options::="--force-confdef" \
+    -o Dpkg::Options::="--force-confold"  \
+    ttyd \
+    tmux \
+    kitty-terminfo \
+    containerd.io \
+    curl \
+    docker-ce \
+    docker-ce-cli \
+    kubelet \
+    kubeadm \
+    open-iscsi
+#+end_src
+
+** cilium
+#+begin_src tmux
+sudo su -
+cd /tmp
+curl -L --remote-name-all \
+    https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz{,.sha256sum}
+sha256sum --check cilium-linux-amd64.tar.gz.sha256sum
+tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
+rm cilium-linux-amd64.tar.gz cilium-linux-amd64.tar.gz.sha256sum
+#+end_src
+** flux
+#+begin_src tmux
+curl -s https://fluxcd.io/install.sh | bash
+#+end_src
+** helm
+#+begin_src tmux
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+#+end_src
+* configure starting kubernetes
+** swap
+*** disable swap
+#+begin_src tmux
+sudo swapoff /swapfile
+#+end_src
+*** remove swap from /etc/fstab
+Swap will be remounted when we reboot, unless we remove it from the File System TAB.
+#+begin_src tmux
+sudo sed -i '/swapfile/d' /etc/fstab
+#+end_src
+*** Check results
+Swap will be remounted when we reboot, unless we remove it from the File System TAB.
+#+begin_src tmux
+free -m
+cat /etc/fstab
+#+end_src
+** containerd
+Kubernetes needs systemdcgroup when using cilium
+*** [[/ssh:root@uk.cloudnative.coop:/etc/containerd/config.toml][/etc/containerd/config.toml]]
+#+begin_src toml :tangle (concat tramp-dir "etc/containerd/config.toml")
+version = 2
+[plugins]
+  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+    runtime_type = "io.containerd.runc.v2"
+    [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+      SystemdCgroup = true
+#+end_src
+*** restart containerd w/ new config
+#+begin_src bash :results silent :async
+sudo systemctl restart containerd
+#+end_src
+** [[/ssh:root@uk.cloudnative.coop:/etc/crictl.yaml][/etc/crictl.yaml]]
+crictl needs to be confugured to use our containred socket. (It complains otherwise)
+#+begin_src toml :tangle (concat tramp-dir "etc/crictl.yaml")
+runtime-endpoint: unix:///var/run/containerd/containerd.sock
+image-endpoint: unix:///var/run/containerd/containerd.sock
+timeout: 10
+debug: false
+#+end_src
+** [[/ssh:root@uk.cloudnative.coop:/etc/kubernetes/kubeadm-config.yaml][/etc/kubernetes/kubeadm-config.yaml]]
+*** Default Config
+#+begin_src bash :wrap "src yaml" :sync
+kubeadm config print init-defaults
+#+end_src
+
+#+RESULTS:
+#+begin_src yaml
+apiVersion: kubeadm.k8s.io/v1beta3
+bootstrapTokens:
+- groups:
+  - system:bootstrappers:kubeadm:default-node-token
+  token: abcdef.0123456789abcdef
+  ttl: 24h0m0s
+  usages:
+  - signing
+  - authentication
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: 1.2.3.4
+  bindPort: 6443
+nodeRegistration:
+  criSocket: unix:///var/run/containerd/containerd.sock
+  imagePullPolicy: IfNotPresent
+  name: node
+  taints: null
+---
+apiServer:
+  timeoutForControlPlane: 4m0s
+apiVersion: kubeadm.k8s.io/v1beta3
+certificatesDir: /etc/kubernetes/pki
+clusterName: kubernetes
+controllerManager: {}
+dns: {}
+etcd:
+  local:
+    dataDir: /var/lib/etcd
+imageRepository: registry.k8s.io
+kind: ClusterConfiguration
+kubernetesVersion: 1.28.0
+networking:
+  dnsDomain: cluster.local
+  serviceSubnet: 10.96.0.0/12
+scheduler: {}
+#+end_src
+
+*** My InitConfiguration
+We need to disabled kube-proxy, and ensure we use the criSocket.
+We will let cilium handle the kube-proxy aspects of the cluster
+#+begin_src toml :tangle (concat tramp-dir "etc/kubernetes/kubeadm-config.yaml") :comments no
+---
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: InitConfiguration
+skipPhases:
+  - addon/kube-proxy
+nodeRegistration:
+  taints: []
+#+end_src
+*** My ClusterConfiguration
+Let's be sure our naming is specific to this cluster for Certs and DNS
+#+begin_src toml :tangle (concat tramp-dir "etc/kubernetes/kubeadm-config.yaml") :comments no
+---
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: ClusterConfiguration
+clusterName: uk.cloudnative.coop
+kubernetesVersion: 1.28.0
+controlPlaneEndpoint: "k8s.uk.cloudnative.coop:6443"
+apiServer:
+  certSans:
+    - "145.40.113.209"
+    - "k8s.uk.cloudnative.coop"
+#+end_src
+** [[/ssh:root@uk.cloudnative.coop:/etc/kubernetes/cilium-values.yaml][/etc/kubernetes/cilium-values.yaml]]
+These are the helm chart values for the 'kubeproxy-free' setup of Cilium
+- [[https://docs.cilium.io/en/latest/network/kubernetes/kubeproxy-free/#quick-start][KubeProxy free Quickstart]]
+- [[https://github.com/cilium/cilium/tree/v1.13.3/install/kubernetes/cilium#values][Cilium Helm Values Documentation]]
+*** base config
+#+begin_src yaml :tangle (concat tramp-dir "etc/kubernetes/cilium-values.yaml")
+k8sServiceHost: k8s.uk.cloudnative.coop
+k8sServicePort: 6443
+kubeProxyReplacement: strict
+policyEnforcementMode: "never"
+operator:
+  replicas: 1
+#+end_src
+*** Enable Gateway API
+I hear this is cool
+#+begin_src yaml :tangle (concat tramp-dir "etc/kubernetes/cilium-values.yaml")
+gatewayAPI:
+  enabled: true
+#+end_src
+*** (dis)able IngressController
+I'm really keen to try this out, but we need to find a way to set the following on the cilium-ingress:
+#+begin_src yaml
+externalIPs:
+  - 145.40.113.209
+loadBalancerIP: 192.168.1.145
+#+end_src
+Along with figuring out connectivity. fs
+#+begin_src yaml :tangle (concat tramp-dir "etc/kubernetes/cilium-values.yaml")
+ingressController:
+  enabled: false
+  service:
+    # type: NodePort
+    type: LoadBalancer
+#+end_src
+*** hubble
+#+begin_src yaml :tangle (concat tramp-dir "etc/kubernetes/cilium-values.yaml")
+hubble:
+  enabled: true
+  listenAddress: ":4244"
+  metrics:
+    enabled:
+      - dns
+      - drop
+      - tcp
+      - flow
+      - port-distribution
+      - icmp
+      - http
+  relay:
+    enabled: true
+  ui:
+    enabled: true
+#+end_src
+* configure completion
+#+begin_src tmux
+helm completion bash > /etc/bash_completion.d/helm
+flux completion bash > /etc/bash_completion.d/flux
+kubectl completion bash > /etc/bash_completion.d/kubectl
+#+end_src
+* actually init and start kubernetes
+** Pull down kubernetes container images
+#+begin_src bash :sync
+kubeadm config images pull
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[config/images] Pulled registry.k8s.io/kube-apiserver:v1.28.0
+[config/images] Pulled registry.k8s.io/kube-controller-manager:v1.28.0
+[config/images] Pulled registry.k8s.io/kube-scheduler:v1.28.0
+[config/images] Pulled registry.k8s.io/kube-proxy:v1.28.0
+[config/images] Pulled registry.k8s.io/pause:3.9
+[config/images] Pulled registry.k8s.io/etcd:3.5.9-0
+[config/images] Pulled registry.k8s.io/coredns/coredns:v1.10.1
+#+end_example
+
+** Inspect kubernetes container images
+#+begin_src bash :sync
+sudo crictl images
+#+end_src
+
+#+RESULTS:
+#+begin_example
+IMAGE                                     TAG                 IMAGE ID            SIZE
+registry.k8s.io/coredns/coredns           v1.10.1             ead0a4a53df89       16.2MB
+registry.k8s.io/etcd                      3.5.9-0             73deb9a3f7025       103MB
+registry.k8s.io/kube-apiserver            v1.28.0             bb5e0dde9054c       34.6MB
+registry.k8s.io/kube-controller-manager   v1.28.0             4be79c38a4bab       33.4MB
+registry.k8s.io/kube-proxy                v1.28.0             ea1030da44aa1       24.6MB
+registry.k8s.io/kube-scheduler            v1.28.0             f6f496300a2ae       18.8MB
+registry.k8s.io/pause                     3.9                 e6f1816883972       322kB
+#+end_example
+
+** Initialize our cluster
+#+begin_src tmux
+kubeadm init --config /etc/kubernetes/kubeadm-config.yaml
+#+end_src
+** Configure our KUBECONFIG
+#+begin_src tmux
+mkdir -p $HOME/.kube
+sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+#+end_src
+** wait for apiserver and untaint control plane
+I don't think we need this anymore
+#+begin_src tmux
+until kubectl get --raw='/readyz?verbose'; do sleep 5; done
+echo kubectl taint nodes --all node-role.kubernetes.io/control-plane:NoSchedule-
+#+end_src
+** Gateway API
+- https://isovalent.com/blog/post/tutorial-getting-started-with-the-cilium-gateway-api/
+Looks like there's a new version at:
+- https://gateway-api.sigs.k8s.io/guides/#install-standard-channel
+
+#+begin_src tmux
+kubectl apply -f  \
+    https://github.com/kubernetes-sigs/gateway-api/releases/download/v0.7.1/experimental-install.yaml
+#+end_src
+
+#+RESULTS:
+#+begin_example
+customresourcedefinition.apiextensions.k8s.io/gatewayclasses.gateway.networking.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/gateways.gateway.networking.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/httproutes.gateway.networking.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/referencegrants.gateway.networking.k8s.io created
+namespace/gateway-system created
+validatingwebhookconfiguration.admissionregistration.k8s.io/gateway-api-admission created
+service/gateway-api-admission-server created
+deployment.apps/gateway-api-admission-server created
+serviceaccount/gateway-api-admission created
+clusterrole.rbac.authorization.k8s.io/gateway-api-admission created
+clusterrolebinding.rbac.authorization.k8s.io/gateway-api-admission created
+role.rbac.authorization.k8s.io/gateway-api-admission created
+rolebinding.rbac.authorization.k8s.io/gateway-api-admission created
+job.batch/gateway-api-admission created
+job.batch/gateway-api-admission-patch created
+#+end_example
+
+** cni: cilium
+You may need to run this a few times, and make sure gateway-system is up before you start.
+#+begin_src tmux
+helm repo add cilium https://helm.cilium.io/
+helm upgrade --install cilium cilium/cilium \
+    --version 1.14.1 \
+    --namespace kube-system \
+    -f /etc/kubernetes/cilium-values.yaml
+#+end_src
+** wait for our node to be Ready
+Cluster should be up at this point
+#+begin_src tmux
+kubectl wait --for=condition=Ready \
+    --selector=node-role.kubernetes.io/control-plane="" \
+    --timeout=120s node
+#+end_src
+** copy our kubeconfig local
+#+begin_src shell :sync :results silent
+scp root@$SPACE_TLD:/etc/kubernetes/admin.conf $KUBECONFIG
+#+end_src
+
+* Bootstrap Fux + Sops Encryption
+** generate a github TOKEN
+https://github.com/settings/tokens/new
+https://github.com/settings/personal-access-tokens/new
+Make sure it's for the right organization
+- Administration :: Access: Read and write
+- Contents :: Access: Read and write
+- Metadata :: Access: Read-only
+
+** setup gh cli and authenticate
+#+begin_src tmux
+sudo apt-get install gh
+#+end_src
+** bootstrap flux
+This needs to be done to the correct folder, owner, and repo...
+#+begin_src tmux
+flux bootstrap github --branch=uk --owner=cloudnative-coop --repository=infra --path=clusters/uk.cloudnative.coop
+#+end_src
+#+begin_example
+? What account do you want to log into? GitHub.com
+? What is your preferred protocol for Git operations? HTTPS
+? Authenticate Git with your GitHub credentials? Yes
+? How would you like to authenticate GitHub CLI?  [Use arrows to move, type to filter]
+  Login with a web browser
+> Paste an authentication token
+#+end_example
+** TODO at this point check out the repo and put this file into ./clusters/thinkpad/ or similar
+#+begin_src tmux
+git clone git@github.com:cloudnative-coop/infra || gh repo clone cloudnative-coop/infra
+cp this.org infra/clusters/NEW/setup.org
+#+end_src
+** Setup SOPS + Flux
+*** install sops binary
+**** linux
+#+begin_src tmux
+wget https://github.com/getsops/sops/releases/download/v3.7.3/sops_3.7.3_amd64.deb
+sudo dpkg -i sops_*deb
+rm sops_*deb
+#+end_src
+**** mac
+#+begin_src bash
+brew install gnupg sops
+#+end_src
+*** generate gpg key
+#+begin_src shell :env KEY_NAME="k8s.uk.cloudnative.coop" :sync :results silent
+export KEY_NAME="k8s.uk.cloudnative.coop"
+export KEY_COMMENT="flux secrets"
+
+gpg --batch --full-generate-key <<EOF
+%no-protection
+Key-Type: 1
+Key-Length: 4096
+Subkey-Type: 1
+Subkey-Length: 4096
+Expire-Date: 0
+Name-Comment: ${KEY_COMMENT}
+Name-Real: ${KEY_NAME}
+EOF
+#+end_src
+
+*** list gpg keys
+#+begin_src shell :env KEY_NAME="k8s.uk.cloudnative.coop" :sync
+export KEY_NAME="k8s.uk.cloudnative.coop"
+gpg --list-secret-keys "${KEY_NAME}"
+#+end_src
+
+#+RESULTS:
+#+begin_example
+sec   rsa4096 2023-08-17 [SCEAR]
+      ECD5E68E3550DD7990346DBE2905C53630D2C990
+uid           [ultimate] k8s.uk.cloudnative.coop (flux secrets)
+ssb   rsa4096 2023-08-17 [SEAR]
+
+#+end_example
+
+*** import into kubernetes
+#+begin_src shell :env KEY_NAME="k8s.uk.cloudnative.coop" :sync
+export KEY_NAME="k8s.uk.cloudnative.coop"
+export KEY_FP=$(gpg --list-secret-keys "${KEY_NAME}" | grep SCEA -A1 | tail -1 | awk '{print $1}')
+kubectl delete secret sops-gpg --namespace=flux-system || true
+gpg --export-secret-keys --armor "${KEY_FP}" |
+kubectl create secret generic sops-gpg \
+--namespace=flux-system \
+--from-file=sops.asc=/dev/stdin
+#+end_src
+
+#+RESULTS:
+#+begin_example
+secret/sops-gpg created
+#+end_example
+
+*** export key into git
+#+begin_src shell :env KEY_NAME="k8s.uk.cloudnative.coop" :results silent :sync
+export KEY_NAME="k8s.uk.cloudnative.coop"
+export KEY_FP=$(gpg --list-secret-keys "${KEY_NAME}" | grep SCEA -A1 | tail -1 | awk '{print $1}')
+# gpg --export --armor "${KEY_FP}" > ./clusters/thinkpad/.sops.pub.asc
+gpg --export --armor "${KEY_FP}" > .sops.pub.asc
+#+end_src
+
+*** write SOPS config file
+#+begin_src shell :env KEY_NAME="k8s.uk.cloudnative.coop" :results silent :sync
+export KEY_NAME="k8s.uk.cloudnative.coop"
+export KEY_FP=$(gpg --list-secret-keys "${KEY_NAME}" | grep SCEA -A1 | tail -1 | awk '{print $1}')
+cat <<EOF >> ./.sops.yaml
+creation_rules:
+  - path_regex: .*.yaml
+    encrypted_regex: ^(data|stringData)$
+    pgp: ${KEY_FP}
+EOF
+#+end_src
+* PDNS api Secret
+https://github.com/zachomedia/cert-manager-webhook-pdns#powerdns-cert-manager-acme-webhook
+Create one here with only access to uk.cloudnative.coop
+https://powerdns.ii.nz/admin/manage-keys
+** cert-manager
+*** create pdns secret
+Note that the TSIG_KEY we retrieve is base64 encoded... it get's double encoded as a kubernetes secret. Most places you use a TSIG_KEY are expecting the base64 value we have here.
+#+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\nexport KUBECONFIG\n" :sync :results silent
+source .envrc
+kubectl -n cert-manager \
+    create secret generic pdns \
+    --from-literal=api-key="$PDNS_API_KEY" \
+    --dry-run=client -o yaml > \
+
+#+end_src
+
+*** encrypt pdns secret
+We need to encrypt the pdns-secret with sops and commit/push so flux can decrypt and apply it
+#+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\n" :results silent :sync
+sops --encrypt --in-place ./secrets/cert-manager-pdns.yaml
+#+end_src
+
+* minio user / password
+** minio-env-config
+*** create minio secret
+This is basically a file mapping for an env file called config.env
+#+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\nexport KUBECONFIG\n" :sync :results silent
+source .envrc
+kubectl -n minio \
+    create secret generic minio-env-config \
+    --from-literal=config.env="export MINO_ROOT_USER=$MINIO_ROOT_USER
+export MINIO_ROOT_PASSWORD=$MINIO_ROOT_PASSWORD" \
+    --dry-run=client -o yaml > \
+     ./secrets/minio-env-config.yaml
+#+end_src
+
+*** encrypt minio secret
+#+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\n" :results silent :sync
+sops --encrypt --in-place ./secrets/minio-env-config.yaml
+#+end_src
+
+* PowerDNS
+** secrets/pdns.conf
+#+begin_src shell :dir . :sync :results silent
+cat <<-EOF > secrets/pdns.conf
+local-address=0.0.0.0,::
+# launch=gsqlite3
+# gsqlite3-dnssec
+# gsqlite3-database=/var/lib/powerdns/pdns.sqlite3
+include-dir=/etc/powerdns/pdns.d
+# https://doc.powerdns.com/authoritative/settings.html#launch
+# launch=gsqlite3,gpgsql
+# https://doc.powerdns.com/authoritative/backends/generic-postgresql.html#settings
+dnsupdate=yes
+allow-dnsupdate-from=0.0.0.0/0
+launch=gpgsql
+default-soa-content=ns.uk.cloudnative.coop hostmaster.cloudnative.coop 0 10800 3600 604800 3600
+gpgsql-host=powerdns-db-postgresql
+gpgsql-dbname=postgres
+gpgsql-user=postgres
+gpgsql-dnssec=yes
+gpgsql-password=${PDNS_DB_PASSWORD}
+EOF
+#+end_src
+** secrets/_api.conf
+#+begin_src shell :dir . :sync :results silent
+cat <<-EOF > secrets/_api.conf
+webserver
+api
+api-key=${PDNS_API_KEY}
+webserver-address=0.0.0.0
+webserver-allow-from=0.0.0.0/0
+webserver-password=${PDNS_WEB_PASSWORD}
+EOF
+#+end_src
+
+** create powerdns secret
+This is basically a file mapping for an env file called config.env
+#+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\nexport KUBECONFIG\n" :sync :results silent
+source .envrc
+kubectl -n powerdns \
+    create secret generic powerdns \
+    --from-file=pdns.conf=secrets/pdns.conf \
+    --from-file=_api.conf=secrets/_api.conf \
+    --from-literal=api_key=${PDNS_API_KEY} \
+    --from-literal=admin_user=${PDNS_ADMIN_USER} \
+    --from-literal=admin_password=${PDNS_ADMIN_PASSWORD} \
+    --from-literal=postgres-password=${PDNS_DB_PASSWORD} \
+    --from-literal=postgres_password=${PDNS_DB_PASSWORD} \
+    --dry-run=client -o yaml > \
+     ./secrets/powerdns.yaml
+#+end_src
+
+** encrypt powerdns secret
+#+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\n" :results silent :sync
+sops --encrypt --in-place ./secrets/powerdns.yaml
+#+end_src
+
+* gitops
+** update the gitops.yaml with
+
+Ideally we could store this in a secret... but the helm chart doesn't seem to easily allow that.
+flux folks are wanting you to use this to bootstrap and move towards SSO.
+
+#+begin_src shell :sync
+echo "$GITOPS_PASSWORD" | gitops get bcrypt-hash
+#+end_src
+
+#+RESULTS:
+#+begin_example
+$2a$10$cpQwRg1WiUg4uf0dX3NU/.E6OSJCmQgCdOGWBeaBDYCzL450LUZq2
+#+end_example
+
+** dashboard
+*** ensure GITOPS_PASSWORD is set
+#+begin_src bash :sync :dir . :results silent
+. .envrc
+gitops create dashboard ww-gitops \
+  --password=$GITOPS_PASSWORD \
+  --export > .../gitops-dashboard.yaml
+#+end_src
+
+*** ensure github
+#+begin_src bash :sync :dir . :results silent
+. .envrc
+gitops create dashboard ww-gitops \
+  --password=$GITOPS_PASSWORD \
+  --export > ./gitops-dashboard.yaml
+#+end_src
+** reciever
+*** setup webhook
+https://github.com/cloudnative-nz/infra/settings/hooks/new
+**** generate HMAC
+#+name: new_hmac
+#+begin_src shell :sync
+TOKEN=$(head -c 12 /dev/urandom | shasum | cut -d ' ' -f1)
+echo export FLUX_RECEIVER_TOKEN=$TOKEN >> .envrc
+#+end_src
+
+**** check env
+#+begin_src bash :sync :dir . :results silent
+. .envrc
+echo -n $FLUX_RECEIVER_TOKEN
+#+end_src
+
+**** create receiven-token secrets
+#+begin_src bash :epilogue "\n) 2>&1\n:\n" :prologue "(\nexport KUBECONFIG\n" :results silent :dir . :sync
+. .envrc
+KUBECONFIG=~/.kube/config-uk.cloudnative.coop
+export KUBECONFIG
+kubectl -n flux-system create secret \
+    --dry-run=client -o yaml \
+    generic receiver-token \
+    --from-literal=token=$FLUX_RECEIVER_TOKEN > ./secrets/flux-receiver.yaml
+#+end_src
+*** encrypt and commit TSIG secret
+We need to encrypt the secret with sops and commit/push so flux can decrypt and apply it
+#+begin_src bash :epilogue "\n) 2>&1\n:\n" :prologue "(\nexport KUBECONFIG\n" :results silent :dir . :sync
+sops --encrypt --in-place ./secrets/flux-receiver.yaml
+#+end_src
+
+*** get the ingress
+#+begin_src bash :epilogue "\n) 2>&1\n:\n" :prologue "(\nexport KUBECONFIG\n" :dir . :sync
+kubectl -n flux-system get ingress webhook-receiver
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAME               CLASS   HOSTS                              ADDRESS          PORTS     AGE
+webhook-receiver   nginx   flux-webhook.uk.cloudnative.coop   145.40.113.209   80, 443   8m58s
+#+end_example
+
+*** get the hook path
+We need to encrypt the secret with sops and commit/push so flux can decrypt and apply it
+#+begin_src bash :epilogue "\n) 2>&1\n:\n" :prologue "(\nexport KUBECONFIG\n" :dir . :sync
+kubectl -n flux-system get receiver
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAME              AGE   READY   STATUS
+github-receiver   12m   True    Receiver initialized for path: /hook/e40123b877be41ea5bf7c2712ebf1fbaec7a0176e1342f60c1848bf8b25b1fbb
+#+end_example
+*** combine them into something like
+Use the Secret and this PayloadURL to create a new webook:
+[[https://github.com/cloudnative-nz/infra/settings/hooks]]
+[[https://github.com/cloudnative-nz/infra/settings/hooks/new]]
+#+begin_src bash :epilogue "\n) 2>&1\n:\n" :prologue "(\nexport KUBECONFIG\n" :dir . :sync
+echo PayloadURL: https://$(kubectl -n flux-system get ingress webhook-receiver -o jsonpath="{.spec.rules[0].host}")$(kubectl -n flux-system get receiver github-receiver -o jsonpath="{.status.webhookPath}")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+PayloadURL: https://flux-webhook.uk.cloudnative.coop/hook/e40123b877be41ea5bf7c2712ebf1fbaec7a0176e1342f60c1848bf8b25b1fbb
+#+end_example
+*** current hook
+* Footnotes
+Old
+** PDNS TSIG Secret
+https://github.com/zachomedia/cert-manager-webhook-pdns#powerdns-cert-manager-acme-webhook
+Create one here with only access to uk.cloudnative.coop
+https://powerdns.ii.nz/admin/manage-keys
+*** cert-manager
+**** create rfc2136 secret
+Note that the TSIG_KEY we retrieve is base64 encoded... it get's double encoded as a kubernetes secret. Most places you use a TSIG_KEY are expecting the base64 value we have here.
+#+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\nexport KUBECONFIG\n" :sync :results silent
+source .envrc
+kubectl -n cert-manager \
+    create secret generic rfc2136 \
+    --from-literal="$PDNS_TSIG_KEYNAME"="$PDNS_TSIG_KEY" \
+    --dry-run=client -o yaml > \
+     ./secrets/cert-manager-rfc2136.yaml
+#+end_src
+
+**** encrypt rfc2136 secret
+We need to encrypt the pdns-secret with sops and commit/push so flux can decrypt and apply it
+#+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\n" :results silent :sync
+sops --encrypt --in-place ./secrets/cert-manager-rfc2136.yaml
+#+end_src
+
+*** external-dns
+**** create rfc2136 secret
+Note that the TSIG_KEY we retrieve is base64 encoded... it get's double encoded as a kubernetes secret. Most places you use a TSIG_KEY are expecting the base64 value we have here.
+#+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\nexport KUBECONFIG\n" :sync :results silent
+source .envrc
+kubectl -n external-dns \
+    create secret generic rfc2136 \
+    --from-literal="$PDNS_TSIG_KEYNAME"="$PDNS_TSIG_KEY" \
+    --dry-run=client -o yaml > \
+    ./secrets/external-dns-rfc2136.yaml
+#+end_src
+
+**** encrypt rfc2136 secret
+We need to encrypt the pdns-secret with sops and commit/push so flux can decrypt and apply it
+#+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\n" :results silent :sync
+sops --encrypt --in-place ./secrets/external-dns-rfc2136.yaml
+#+end_src
+
+** Setup SOPS + Flux
+*** sops binary
+**** linux
+#+begin_src shell
+wget https://github.com/getsops/sops/releases/download/v3.7.3/sops_3.7.3_amd64.deb
+dpkg -i sops_*deb
+rm sops_*deb
+#+end_src
+**** mac
+#+begin_src shell
+brew install gnupg sops
+#+end_src
+*** generate gpg key
+#+begin_src shell :env KEY_NAME="k8s.uk.cloudnative.coop"
+export KEY_NAME="k8s.uk.cloudnative.coop"
+export KEY_COMMENT="flux secrets"
+
+gpg --batch --full-generate-key <<EOF
+%no-protection
+Key-Type: 1
+Key-Length: 4096
+Subkey-Type: 1
+Subkey-Length: 4096
+Expire-Date: 0
+Name-Comment: ${KEY_COMMENT}
+Name-Real: ${KEY_NAME}
+EOF
+#+end_src
+
+#+begin_src shell :env KEY_NAME="k8s.uk.cloudnative.coop"
+export KEY_NAME="k8s.uk.cloudnative.coop"
+gpg --list-secret-keys "${KEY_NAME}"
+#+end_src
+
+#+end_example
+*** import into kubernetes
+#+begin_src shell :env KEY_NAME="k8s.uk.cloudnative.coop"
+export KEY_NAME="k8s.uk.cloudnative.coop"
+export KEY_FP=$(gpg --list-secret-keys "${KEY_NAME}" | grep SCEAR -A1 | tail -1 | awk '{print $1}')
+gpg --export-secret-keys --armor "${KEY_FP}" |
+kubectl create secret generic sops-gpg \
+--namespace=flux-system \
+--from-file=sops.asc=/dev/stdin
+#+end_src
+
+#+RESULTS:
+#+begin_example
+secret/sops-gpg created
+#+end_example
+*** export key into git
+#+begin_src shell :env KEY_NAME="k8s.uk.cloudnative.coop" :results silent
+export KEY_NAME="k8s.uk.cloudnative.coop"
+export KEY_FP=$(gpg --list-secret-keys "${KEY_NAME}" | grep SCEAR -A1 | tail -1 | awk '{print $1}')
+gpg --export --armor "${KEY_FP}" > ./.sops.pub.asc
+#+end_src
+
+*** write SOPS config file
+#+begin_src shell :env KEY_NAME="k8s.uk.cloudnative.coop" :results silent
+export KEY_NAME="k8s.uk.cloudnative.coop"
+export KEY_FP=$(gpg --list-secret-keys "${KEY_NAME}" | grep SCEAR -A1 | tail -1 | awk '{print $1}')
+cat <<EOF > .sops.yaml
+creation_rules:
+  - path_regex: .*.yaml
+    encrypted_regex: ^(data|stringData)$
+    pgp: ${KEY_FP}
+EOF
+#+end_src
+
+https://fluxcd.io/flux/guides/mozilla-sops/#prerequisites
+** Create .envrc
+*** Example
+#+begin_src shell :tangle .envrc.example :tangle-mode (identity #o600)
+# Just needs to be a secrets `pwgen 12` is fine
+export CODER_DB_PASSWORD=
+export CODER_PG_CONNECTION_URL=postgres://postgres:$CODER_DB_PASSWORD@coder-db-postgres.coder.svc.cluster.local:5432/coder?sslmode=disabled
+# We Could set a GITHUB Token for coder, but not for now
+# https://github.com/settings/personal-access-tokens/new
+# https://github.com/settings/personal-access-tokens/1566846
+export GITHUB_TOKEN=
+# https://coder.com/docs/v2/latest/admin/auth
+# https://github.com/organizations/cloudnative-nz/settings/applications/new
+# https://github.com/organizations/cloudnative-nz/settings/applications/2247328
+export CODER_OAUTH2_GITHUB_CLIENT_ID=
+export CODER_OAUTH2_GITHUB_CLIENT_SECRET=
+# https://coder.com/docs/v2/latest/admin/git-providers
+# https://github.com/organizations/cloudnative-nz/settings/apps/new
+# https://github.com/organizations/cloudnative-nz/settings/apps/space-cloudnative-nz
+# NOTE: this is NOT the App ID, use Client ID
+export CODER_GITAUTH_0_CLIENT_ID=
+# NOTE: this is Client Secret
+export CODER_GITAUTH_0_CLIENT_SECRET=
+# We created a tsig key with DNS-UPDATE only for uk.cloudnative.coop
+export PDNS_API_KEY=
+# I created a new project a key
+# https://console.equinix.com/projects/0c218738-18c0-47b5-a404-beb59d9c6585/general
+export METAL_PROJECT_ID=
+# https://console.equinix.com/projects/0c218738-18c0-47b5-a404-beb59d9c6585/api-keys
+export METAL_AUTH_TOKEN=
+# OIDC with authentik deployed to sso.ii.nz
+# https://sso.ii.nz/if/admin/#/core/applications/cloudnative-nz
+# https://sso.ii.nz/if/admin/#/core/providers/2
+export CODER_OIDC_CLIENT_ID=
+export CODER_OIDC_CLIENT_SECRET=
+#+end_src
+*** Save .envrc to .enc.envrc with sops
+#+begin_src tmux :session "cluster:secret"
+sops -e --input-type dotenv .envrc > .enc.envrc
+#+end_src
+** Create Kubernetes Secrets
+*** Save pdns TSIG key as a kubernetes secret
+PDNS_TSIG_KEY needs to be set to the activated TSIG key with TSIG-ALLOW_DNSUPDATE
+#+begin_src tmux :session "cluster:secret"
+. .envrc
+echo $PDNS_TSIG_KEY
+kubectl create secret generic pdns \
+    --namespace=cert-manager \
+    --from-literal=key=$PDNS_TSIG_KEY \
+    -o yaml \
+    --dry-run=client > ./pdns-secret.yaml
+sops --encrypt --in-place pdns-secret.yaml
+#+end_src
+
+*** generate coder secret
+Mostly we map the env vars directly.
+#+begin_src bash :sync :results silent :dir .
+. .envrc
+kubectl create secret generic coder \
+    --namespace=coder \
+    --from-literal=PDNS_TSIG_KEY=$PDNS_TSIG_KEY \
+    --from-literal=PDNS_API_KEY=$PDNS_API_KEY \
+    --from-literal=GITHUB_TOKEN=$GITHUB_TOKEN \
+    --from-literal=CODER_OAUTH2_GITHUB_CLIENT_ID=$CODER_OAUTH2_GITHUB_CLIENT_ID \
+    --from-literal=CODER_OAUTH2_GITHUB_CLIENT_SECRET=$CODER_OAUTH2_GITHUB_CLIENT_SECRET \
+    --from-literal=CODER_GITAUTH_0_CLIENT_ID=$CODER_GITAUTH_0_CLIENT_ID \
+    --from-literal=CODER_GITAUTH_0_CLIENT_SECRET=$CODER_GITAUTH_0_CLIENT_SECRET \
+    --from-literal=CODER_OIDC_CLIENT_ID=$CODER_OIDC_CLIENT_ID \
+    --from-literal=CODER_OIDC_CLIENT_SECRET=$CODER_OIDC_CLIENT_SECRET \
+    --from-literal=METAL_AUTH_TOKEN=$METAL_AUTH_TOKEN \
+    --from-literal=password=$CODER_DB_PASSWORD \
+    --from-literal=postgres-password=$CODER_DB_PASSWORD \
+    --from-literal=CODER_PG_CONNECTION_URL="postgres://postgres:$CODER_DB_PASSWORD@coder-db-postgresql.coder.svc.cluster.local:5432/coder?sslmode=disable" \
+    -o yaml --dry-run=client > ./secrets/coder.yaml
+#+end_src
+
+*** encode coder secret
+Mostly we map the env vars directly.
+#+begin_src bash :sync :results silent :dir .
+sops --encrypt --in-place ./secrets/coder.yaml
+#+end_src
+** Variables
+# Local Variables:
+# space-domain: "uk.cloudnative.coop"
+# tramp-dir: "/ssh:root@uk.cloudnative.coop:/"
+# eval: (setq org-babel-tmux-terminal "kitty")
+# eval: (setq org-babel-tmux-terminal-opts '("--hold"))
+# End:
