@@ -2,13 +2,13 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - secrets.yaml
-  # - capi.yaml
   - nginx.yaml
+  - cert-manager.yaml
+  # - gitops.yaml
   # - longhorn.yaml
   # - minio.yaml
-  # - gitops.yaml
-  # - cert-manager.yaml
-  # - external-dns.yaml
   # - reflector.yaml
   # - coder.yaml
   # - vcluster.yaml
+  # - external-dns.yaml
+  # - capi.yaml
