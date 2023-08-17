@@ -27,7 +27,7 @@ spec:
       - dns01:
           webhook:
             # This group needs to be configured when installing the helm package, otherwise the webhook won't have permission to create an ACME challenge for this API group.
-            groupName: acme.cloudnative.nz
+            groupName: ${DOMAIN:=ii.nz}
             solverName: pdns
             config:
               # zone: example.com # (Optional): When not provided the Zone will obtained by cert-manager's ResolvedZone

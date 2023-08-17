@@ -27,4 +27,4 @@ spec:
       interval: 12h
   # https://github.com/zachomedia/cert-manager-webhook-pdns/blob/main/deploy/cert-manager-webhook-pdns/values.yaml
   values:
-    groupName: acme.cloudnative.nz
+    groupName: ${DOMAIN:=ii.nz}
