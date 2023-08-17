@@ -8,7 +8,7 @@ resources:
   - longhorn.yaml
   - coder.yaml
   - vcluster.yaml
-  # - minio.yaml
+  - minio.yaml
   # - reflector.yaml
   # - external-dns.yaml
   # - capi.yaml
