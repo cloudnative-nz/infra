@@ -13,4 +13,4 @@ spec:
     name: flux-system
   postBuild:
     substitute:
-      LONGHORN_INGRESS_HOST: longhorn.uk.cloudnative.nz
+      LONGHORN_INGRESS_HOST: longhorn.uk.cloudnative.coop
