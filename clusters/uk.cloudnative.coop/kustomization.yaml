@@ -9,6 +9,7 @@ resources:
   - coder.yaml
   - vcluster.yaml
   - minio.yaml
+  - powerdns.yaml
   # - reflector.yaml
   # - external-dns.yaml
   # - capi.yaml
