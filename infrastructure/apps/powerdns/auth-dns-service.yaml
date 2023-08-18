@@ -5,7 +5,7 @@ metadata:
   namespace: powerdns
 spec:
   type: LoadBalancer
-  loadBalancerIP: 123.253.176.253
+  loadBalancerIP: 145.40.113.209
   allocateLoadBalancerNodePorts: true
   externalTrafficPolicy: Cluster
   internalTrafficPolicy: Cluster
