@@ -104,8 +104,10 @@ spec:
                   key: postgres-password
           volumeMounts:
             - mountPath: /etc/powerdns/templates.d
-              name: powerdns-templates
+              name: jinja-templates
               readOnly: false
+            - mountPath: /var/lib/powerdns
+              name: powerdns-auth
             # We use to do a lot of configuration via secrets
             # and mount them directl... going to try to use
             # ENV vars and templates instead
@@ -116,19 +118,17 @@ spec:
             # - mountPath: /etc/powerdns/pdns.d
             #   name: powerdns
             #   readOnly: false
-          #   - mountPath: /var/lib/powerdns
-          #     name: powerdns-auth
           resources: {}
       volumes:
         # - name: powerdns-secret
         #   secret:
         #     secretName: powerdns
-        - name: powerdns-templates
+        - name: jinja-templates
           configMap:
-            name: powerdns-templates
-        # - name: powerdns-auth
-        #   persistentVolumeClaim:
-        #     claimName: powerdns-auth
+            name: jinja-templates
+        - name: powerdns-auth
+          persistentVolumeClaim:
+            claimName: powerdns-auth
         # lifeCycle:
         # from  https://github.com/aescanero/helm-charts/blob/76fcfc3de2db248acaa73c9a1c7572c19bf96504/charts/powerdns/templates/powerdns-deployment.yaml#L36-L42
         # postStart:
