@@ -37,4 +37,4 @@ spec:
     substitute:
       CODER_HOST: space.uk.cloudnative.coop
       CODER_ACCESS_URL: https://space.uk.cloudnative.coop
-      CODER_WILDCARD_DOMAIN: ".uk.cloudnative.coop"
+      CODER_WILDCARD_DOMAIN: "uk.cloudnative.coop"

@@ -34,7 +34,7 @@ spec:
         - name: CODER_ACCESS_URL
           value: "${CODER_ACCESS_URL:=https://space.example.com}"
         - name: CODER_WILDCARD_ACCESS_URL
-          value: "*${CODER_WILDCARD_DOMAIN:=.example.com}"
+          value: "*.${CODER_WILDCARD_DOMAIN:=example.com}"
         - name: CODER_SWAGGER_ENABLE
           value: "true"
         - name: CODER_PROMETHEUS_ADDRESS
@@ -138,7 +138,7 @@ spec:
           enable: true
           # wildcardSecretName:
         host: "${CODER_HOST:=space.example.com}"
-        wildCardHost: "*${CODER_WILDCARD_DOMAIN:=.example.com}"
+        wildCardHost: "*$.{CODER_WILDCARD_DOMAIN:=example.com}"
         service:
           type: ClusterIP
         annotations:
