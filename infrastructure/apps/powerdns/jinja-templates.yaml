@@ -1,23 +1,23 @@
 apiVersion: v1
 data:
-  _api.conf.j2: |
+  _api.j2: |
     webserver
     api
     api-key={{ PDNS_AUTH_API_KEY }}
     webserver-address=0.0.0.0
     webserver-allow-from=0.0.0.0/0
     webserver-password={{ PDNS_AUTH_API_KEY }}
-  dnsupdate.conf.j2: |
+  dnsupdate.j2: |
     dnsupdate=yes
     allow-dnsupdate-from=0.0.0.0/0
-  gpsql.conf.j2: |
+  gpsql.j2: |
     launch=gpgsql
-    gpgsql-dnssec={{ PDNS_gpgsql-dnssec }}
-    gpgsql-host={{ PDNS_gpgsql-host }}
-    gpgsql-dbname={{ PDNS_gpgsql-dbname }}
-    gpgsql-user={{ PDNS_gpgsql-user }}
-    gpgsql-password={{ PDNS_gpgsql-password }}
-  soa-content.conf.j2: |
+    gpgsql-dnssec={{ PDNS_gpsql-dnssec }}
+    gpgsql-host={{ PDNS_gpsql-host }}
+    gpgsql-dbname={{ PDNS_gpsql-dbname }}
+    gpgsql-user={{ PDNS_gpsql-user }}
+    gpgsql-password={{ PDNS_gpsql-password }}
+  soa-content.j2: |
     default-soa-content=ns.{{ PRIMARY_DOMAIN }} hostmaster.{{ PRIMARY_DOMAIN }} 0 10800 3600 604800 3600
 kind: ConfigMap
 metadata:
