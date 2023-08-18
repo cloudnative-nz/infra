@@ -78,61 +78,54 @@ spec:
             - containerPort: 53
             - containerPort: 8081
           env:
-            - name: PDNS_dnsupdate
-              value: "yes"
-            - name: PDNS_allow_dnsupdate_from
-              value: "0.0.0.0/0"
-            - name: PDNS_default_soa_content
-              value: "ns.uk.cloudnative.coop hostmaster.cloudnative.coop 0 10800 3600 604800 3600"
-            - name: PDNS_log_dns_details
-              value: "yes"
-            - name: PDNS_loglevel
-              value: "5"
-            - name: PDNS_query_logging
-              value: "yes"
-            - name: PDNS_webserver_loglevel
-              value: "details"
-            - name: PDNS_disable_syslog
-              value: "true"
-            # - name: PDNS_launch
-            #   value: "gpgsql"
-            # - name: PDNS_gpgsql-host
-            #   value: "powerdns-db-postgresql"
-            # - name: PDNS_gpgsql-user
-            #   value: "postgres"
-            # - name: PDNS_gpgsql-password
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: powerdns
-            #       key: postgres-password
-            # - name: PDNS_gpgsql-dnssec
-            #   value: "yes"
+            # templateroot = /etc/powerdns/templates.d
+            # templatedestination = '/etc/powerdns/pdns.d'
+            - name: PRIMARY_DOMAIN
+              value: "uk.cloudnative.coop"
+            - name: TEMPLATE_FILES
+              value: "_api.conf,gpsql.conf,domain.conf"
             - name: PDNS_AUTH_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: powerdns
                   key: api_key
-            # - name: PDNS_CONF
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: powerdns
-            #       key: api_key
-            #       readOnly: true
+            - name: PDNS_gpgsql-dnssec
+              value: "yes"
+            - name: PDNS_gpgsql-host
+              value: "pdns-db-postgresql"
+            - name: PDNS_gpgsql-dbname
+              value: "postgres"
+            - name: PDNS_gpgsql-user
+              value: "postgres"
+            - name: PDNS_gpgsql-password
+              valueFrom:
+                secretKeyRef:
+                  name: powerdns
+                  key: postgres-password
           volumeMounts:
-            - mountPath: /etc/powerdns
-              name: powerdns
+            - mountPath: /etc/powerdns/templates.d
+              name: powerdns-templates
               readOnly: false
+            # We use to do a lot of configuration via secrets
+            # and mount them directl... going to try to use
+            # ENV vars and templates instead
+            # - mountPath: /etc/powerdns
+            #   name: powerdns
+            #   readOnly: false
             # Being cheeky for now, we need _api.conf
-            - mountPath: /etc/powerdns/pdns.d
-              name: powerdns
-              readOnly: false
+            # - mountPath: /etc/powerdns/pdns.d
+            #   name: powerdns
+            #   readOnly: false
           #   - mountPath: /var/lib/powerdns
           #     name: powerdns-auth
           resources: {}
       volumes:
-        - name: powerdns
-          secret:
-            secretName: powerdns
+        # - name: powerdns-secret
+        #   secret:
+        #     secretName: powerdns
+        - name: powerdns-templates
+          configMap:
+            name: powerdns-templates
         # - name: powerdns-auth
         #   persistentVolumeClaim:
         #     claimName: powerdns-auth
