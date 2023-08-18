@@ -5,8 +5,9 @@ metadata:
   name: powerdns
   namespace: flux-system
 spec:
-  dependsOn:
-    - name: secrets
+  # It does depend on at creation
+  # dependsOn:
+  #   - name: secrets
   interval: 5m
   path: "./infrastructure/apps/powerdns"
   prune: true

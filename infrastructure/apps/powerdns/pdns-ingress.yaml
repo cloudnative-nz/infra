@@ -20,4 +20,4 @@ spec:
             pathType: ImplementationSpecific
   tls:
     - hosts:
-        - pdns.ii.nz
+        - pdns.uk.cloudnative.coop
