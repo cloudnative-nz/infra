@@ -13,7 +13,7 @@ spec:
         paths:
           - backend:
               service:
-                name: auth
+                name: auth-web
                 port:
                   number: 8081
             path: /
