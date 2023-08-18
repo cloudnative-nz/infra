@@ -8,7 +8,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: pdns.uk.cloudnative.nz
+    - host: pdns.uk.cloudnative.coop
       http:
         paths:
           - backend:
