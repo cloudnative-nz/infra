@@ -89,15 +89,15 @@ spec:
                 secretKeyRef:
                   name: powerdns
                   key: api_key
-            - name: PDNS_gpgsql-dnssec
+            - name: PDNS_gpgsql_dnssec
               value: "yes"
-            - name: PDNS_gpgsql-host
+            - name: PDNS_gpgsql_host
               value: "pdns-db-postgresql"
-            - name: PDNS_gpgsql-dbname
+            - name: PDNS_gpgsql_dbname
               value: "postgres"
-            - name: PDNS_gpgsql-user
+            - name: PDNS_gpgsql_user
               value: "postgres"
-            - name: PDNS_gpgsql-password
+            - name: PDNS_gpgsql_password
               valueFrom:
                 secretKeyRef:
                   name: powerdns

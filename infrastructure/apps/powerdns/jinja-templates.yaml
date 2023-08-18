@@ -12,11 +12,11 @@ data:
     allow-dnsupdate-from=0.0.0.0/0
   gpsql.j2: |
     launch=gpgsql
-    gpgsql-dnssec={{ PDNS_gpsql-dnssec }}
-    gpgsql-host={{ PDNS_gpsql-host }}
-    gpgsql-dbname={{ PDNS_gpsql-dbname }}
-    gpgsql-user={{ PDNS_gpsql-user }}
-    gpgsql-password={{ PDNS_gpsql-password }}
+    gpgsql-dnssec={{ PDNS_gpsql_dnssec }}
+    gpgsql-host={{ PDNS_gpsql_host }}
+    gpgsql-dbname={{ PDNS_gpsql_dbname }}
+    gpgsql-user={{ PDNS_gpsql_user }}
+    gpgsql-password={{ PDNS_gpsql_password }}
   soa-content.j2: |
     default-soa-content=ns.{{ PRIMARY_DOMAIN }} hostmaster.{{ PRIMARY_DOMAIN }} 0 10800 3600 604800 3600
 kind: ConfigMap
