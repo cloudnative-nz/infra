@@ -83,7 +83,7 @@ spec:
             - name: PRIMARY_DOMAIN
               value: "uk.cloudnative.coop"
             - name: TEMPLATE_FILES
-              value: "_api.conf,gpsql.conf,domain.conf"
+              value: "_api,gpsql,dnsupdate,soa-content"
             - name: PDNS_AUTH_API_KEY
               valueFrom:
                 secretKeyRef:
