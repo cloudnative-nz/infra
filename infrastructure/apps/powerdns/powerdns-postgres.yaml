@@ -12,9 +12,15 @@
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
-  name: powerdns-db
-  namespace: powerdns
+  name: pdns-db
+  namespace: flux-system
 spec:
+  storageNamespace: flux-system
+  targetNamespace: powerdns
+  releaseName: pdns-db
+  install:
+    createNamespace: true
+  maxHistory: 10
   interval: 30m
   chart:
     spec:
