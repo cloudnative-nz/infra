@@ -3,5 +3,7 @@ kind: Kustomization
 resources:
   - powerdns-postgres.yaml
   - powerdns-auth.yaml
+  - auth-dns-service.yaml
+  - auth-web-service.yaml
   - powerdns-admin.yaml
   - powerdns-admin-configmap.yaml

@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    app: powerdns
+  name: pdns
+  namespace: powerdns
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: pdns.uk.cloudnative.nz
+      http:
+        paths:
+          - backend:
+              service:
+                name: auth
+                port:
+                  number: 8081
+            path: /
+            pathType: ImplementationSpecific
+  tls:
+    - hosts:
+        - pdns.ii.nz
