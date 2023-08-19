@@ -1,16 +1,16 @@
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: powerdns-auth
-  namespace: powerdns
-spec:
-  storageClassName: longhorn
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 5Gi
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: powerdns-auth
+#   namespace: powerdns
+# spec:
+#   storageClassName: longhorn
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 5Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -119,8 +119,8 @@ spec:
             - mountPath: /etc/powerdns/templates.d
               name: jinja-templates
               readOnly: false
-            - mountPath: /var/lib/powerdns
-              name: powerdns-auth
+            # - mountPath: /var/lib/powerdns
+            #   name: powerdns-auth
             # We use to do a lot of configuration via secrets
             # and mount them directl... going to try to use
             # ENV vars and templates instead
@@ -139,7 +139,7 @@ spec:
               exec:
                 command:
                   - "touch"
-                  - "/etc/powerdns/POSTSTART"
+                  - "/tmp/poststart"
                 # command:
                 #   - "/bin/sh"
                 #   - "-c"
