@@ -653,12 +653,10 @@ This is basically a file mapping for an env file called config.env
 source .envrc
 kubectl -n powerdns \
     create secret generic powerdns \
-    --from-file=pdns.conf=secrets/pdns.conf \
-    --from-file=_api.conf=secrets/_api.conf \
     --from-literal=api_key=${PDNS_API_KEY} \
     --from-literal=admin_user=${PDNS_ADMIN_USER} \
+    --from-literal=admin_email=${PDNS_ADMIN_EMAIL} \
     --from-literal=admin_password=${PDNS_ADMIN_PASSWORD} \
-    --from-literal=postgres-password=${PDNS_DB_PASSWORD} \
     --from-literal=postgres_password=${PDNS_DB_PASSWORD} \
     --dry-run=client -o yaml > \
      ./secrets/powerdns.yaml
