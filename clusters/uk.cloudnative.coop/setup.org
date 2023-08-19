@@ -632,22 +632,7 @@ sops --encrypt --in-place ./secrets/minio-env-config.yaml
 #+begin_src shell :dir . :sync :results silent
 cat <<-EOF > secrets/pdns.conf
 local-address=0.0.0.0,::
-# launch=gsqlite3
-# gsqlite3-dnssec
-# gsqlite3-database=/var/lib/powerdns/pdns.sqlite3
 include-dir=/etc/powerdns/pdns.d
-# https://doc.powerdns.com/authoritative/settings.html#launch
-# launch=gsqlite3,gpgsql
-# https://doc.powerdns.com/authoritative/backends/generic-postgresql.html#settings
-dnsupdate=yes
-allow-dnsupdate-from=0.0.0.0/0
-launch=gpgsql
-default-soa-content=ns.uk.cloudnative.coop hostmaster.cloudnative.coop 0 10800 3600 604800 3600
-gpgsql-host=powerdns-db-postgresql
-gpgsql-dbname=postgres
-gpgsql-user=postgres
-gpgsql-dnssec=yes
-gpgsql-password=${PDNS_DB_PASSWORD}
 EOF
 #+end_src
 ** secrets/_api.conf
