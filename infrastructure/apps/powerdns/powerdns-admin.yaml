@@ -102,8 +102,9 @@ spec:
           volumeMounts:
             - mountPath: /data
               name: powerdns-admin
-            - mountPath: /config
+            - mountPath: /app/pdns-poststart.py
               name: powerdns-config
+              subPath: pdns-poststart.py
           resources: {}
           # FIXME: Better approach to dns-poststart
           lifecycle:
@@ -112,14 +113,14 @@ spec:
                 command:
                   - "sh"
                   - "-c"
-                  - "cd /app && cp /config/pdns-poststart.py . && /usr/bin/python3 pdns-poststart.py"
+                  - "cd /app && /usr/bin/python3 pdns-poststart.py"
       volumes:
+        - name: powerdns-config
+          configMap:
+            name: jinja-templates
         - name: powerdns-admin
           persistentVolumeClaim:
             claimName: powerdns-admin
-        - name: powerdns-config
-          configMap:
-            name: powerdns-admin
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
