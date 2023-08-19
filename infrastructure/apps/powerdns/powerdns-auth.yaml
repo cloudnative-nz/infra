@@ -177,9 +177,6 @@ spec:
         - name: jinja-templates
           configMap:
             name: jinja-templates
-        - name: powerdns-auth
-          persistentVolumeClaim:
-            claimName: powerdns-auth
 # ---
 # apiVersion: v1
 # kind: Service
