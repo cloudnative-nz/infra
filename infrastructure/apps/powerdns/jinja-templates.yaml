@@ -58,6 +58,10 @@ data:
   pdns.conf: |
     local-address=0.0.0.0,::
     include-dir=/etc/powerdns/pdns.d
+    disable-syslog=true
+    loglevel=5
+    log-dns-details=yes
+    webserver-loglevel=detailed
   soa-content.j2: |
     default-soa-content=ns.{{ PRIMARY_DOMAIN }} hostmaster.{{ PRIMARY_DOMAIN }} 0 10800 3600 604800 3600
 kind: ConfigMap
