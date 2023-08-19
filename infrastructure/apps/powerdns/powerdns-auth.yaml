@@ -138,10 +138,13 @@ spec:
             postStart:
               exec:
                 command:
-                  - "/bin/sh"
-                  - "-c"
-                  - |-
-                    sleep 99
+                  - "touch"
+                  - "/etc/powerdns/POSTSTART"
+                # command:
+                #   - "/bin/sh"
+                #   - "-c"
+                #   - |-
+                #     sleep 99
                 # command:
                 #   - "/bin/sh"
                 #   - "-c"
