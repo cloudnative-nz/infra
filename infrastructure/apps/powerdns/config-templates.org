@@ -1,4 +1,10 @@
 #+title: PowerDNS Jinja Config Templates
+* pdns
+#+name: pdns.conf
+#+begin_src conf :tangle pdns.conf :comments no
+local-address=0.0.0.0,::
+include-dir=/etc/powerdns/pdns.d
+#+end_src
 * gpsql
 #+name: gpsql.conf
 #+begin_src conf :tangle gpsql.j2 :comments no
@@ -24,7 +30,7 @@ allow-dnsupdate-from=0.0.0.0/0
 #+name: gsqlite.conf
 #+begin_src conf :tangle gsqlite.j2 :comments no
 launch=gsqlite3
-gsqlite3-dnssec=yes
+# gsqlite3-dnssec=yes
 gsqlite3-database=/var/lib/powerdns/pdns.sqlite3
 #+end_src
 * _api.conf
@@ -43,6 +49,7 @@ webserver-password={{ PDNS_AUTH_API_KEY }}
 #+begin_src shell :wrap "src conf :tangle jinja-templates.yaml :comments no"
 kubectl create configmap jinja-templates \
     --namespace=powerdns \
+    --from-file=pdns.conf=pdns.conf \
     --from-file=gpsql.j2=gpsql.j2 \
     --from-file=soa-content.j2=soa-content.j2 \
     --from-file=dnsupdate.j2=dnsupdate.j2 \
@@ -71,6 +78,9 @@ data:
     gpgsql-dbname={{ PDNS_gpsql_dbname }}
     gpgsql-user={{ PDNS_gpsql_user }}
     gpgsql-password={{ PDNS_gpsql_password }}
+  pdns.conf: |
+    local-address=0.0.0.0,::
+    include-dir=/etc/powerdns/pdns.d
   soa-content.j2: |
     default-soa-content=ns.{{ PRIMARY_DOMAIN }} hostmaster.{{ PRIMARY_DOMAIN }} 0 10800 3600 604800 3600
 kind: ConfigMap
