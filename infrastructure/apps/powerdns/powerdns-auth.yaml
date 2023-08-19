@@ -101,7 +101,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: powerdns
-                  key: postgres-password
+                  key: postgres_password
             - name: PDNS_SITE_NAME
               value: "PowerDNS for uk.cloudnative.coop!"
             - name: PDNS_DOMAINS

@@ -38,8 +38,8 @@ spec:
     auth:
       existingSecret: powerdns
       secretKeys:
-        adminPasswordKey: postgres-password
-        userPasswordKey: postgres-password
+        adminPasswordKey: postgres_password
+        userPasswordKey: postgres_password
     persistence:
       size: 10Gi
     # https://github.com/bitnami/charts/tree/main/bitnami/postgresql#initialize-a-fresh-instance
