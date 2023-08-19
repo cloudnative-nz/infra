@@ -103,6 +103,11 @@ spec:
                   name: powerdns
                   key: postgres-password
           volumeMounts:
+            # We could make another configmap
+            # or even jinja template this out
+            - mountPath: /etc/powerdns/pdns.conf
+              name: jinja-templates
+              subPath: pdns.conf
             - mountPath: /etc/powerdns/templates.d
               name: jinja-templates
               readOnly: false
@@ -120,9 +125,6 @@ spec:
             #   readOnly: false
           resources: {}
       volumes:
-        # - name: powerdns-secret
-        #   secret:
-        #     secretName: powerdns
         - name: jinja-templates
           configMap:
             name: jinja-templates

@@ -17,6 +17,9 @@ data:
     gpgsql-dbname={{ PDNS_gpsql_dbname }}
     gpgsql-user={{ PDNS_gpsql_user }}
     gpgsql-password={{ PDNS_gpsql_password }}
+  pdns.conf: |
+    local-address=0.0.0.0,::
+    include-dir=/etc/powerdns/pdns.d
   soa-content.j2: |
     default-soa-content=ns.{{ PRIMARY_DOMAIN }} hostmaster.{{ PRIMARY_DOMAIN }} 0 10800 3600 604800 3600
 kind: ConfigMap
