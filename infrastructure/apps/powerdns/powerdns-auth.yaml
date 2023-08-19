@@ -53,7 +53,7 @@ spec:
       containers:
         - name: auth
           image: powerdns/pdns-auth-48:4.8.1
-          command: ["sleep", "999999"]
+          # command: ["sleep", "999999"]
           # command: ["pdns_server"]
           # args:
           #   - "--disable-syslog=true"
