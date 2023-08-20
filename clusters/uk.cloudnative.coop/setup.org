@@ -765,6 +765,25 @@ echo PayloadURL: https://$(kubectl -n flux-system get ingress webhook-receiver -
 PayloadURL: https://flux-webhook.uk.cloudnative.coop/hook/e40123b877be41ea5bf7c2712ebf1fbaec7a0176e1342f60c1848bf8b25b1fbb
 #+end_example
 *** current hook
+* authentic-env
+** create authentik-env secret
+This is basically a file mapping for an env file called config.env
+#+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\nexport KUBECONFIG\n" :sync :results silent
+source .envrc
+kubectl -n authentik \
+    create secret generic authentik-env \
+    --from-literal=ENV_SECRET=SECRET_VALUE \
+    --from-literal=AUTHENTIK_SECRET_KEY=$AUTHENTIK_SECRET_KEY \
+    --from-literal=AUTHENTIK_POSTGRESQL__PASSWORD=$AUTHENTIK_POSTGRESQL__PASSWORD \
+    --dry-run=client -o yaml > \
+     ./secrets/authentik-env.yaml
+#+end_src
+
+** encrypt authentik-env secret
+#+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\n" :results silent :sync
+sops --encrypt --in-place ./secrets/authentik-env.yaml
+#+end_src
+
 * Footnotes
 Old
 ** PDNS TSIG Secret
