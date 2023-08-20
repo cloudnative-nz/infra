@@ -43,8 +43,8 @@ spec:
       # We may need the cm to exist beforehand, we don't really need it so disabling for now
       # configMapRef:
       #   name: authentik-env
-      secretRef:
-        name: authentik-env
+      - secretRef:
+          name: authentik-env
     authentik:
       error_reporting:
         enabled: false
