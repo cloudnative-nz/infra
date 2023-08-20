@@ -4,6 +4,10 @@
 #+begin_src conf :tangle pdns.conf :comments no
 local-address=0.0.0.0,::
 include-dir=/etc/powerdns/pdns.d
+disable-syslog=true
+loglevel=5
+log-dns-details=yes
+webserver-loglevel=detailed
 #+end_src
 * gpsql
 #+name: gpsql.conf
