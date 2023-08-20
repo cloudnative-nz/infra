@@ -10,6 +10,7 @@ resources:
   - vcluster.yaml
   - minio.yaml
   - powerdns.yaml
+  - authentik.yaml
   # - reflector.yaml
   # - external-dns.yaml
   # - capi.yaml
