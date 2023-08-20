@@ -45,7 +45,7 @@ spec:
       POSTGRES_PASSWORD:
         secretKeyRef:
           name: authentik-postgresql
-          key: postgres-password
+          key: postgresql-password
     env:
       # Set the email address for the default akadmin user.
       # https://goauthentik.io/docs/installation/automated-install#authentik_bootstrap_email
