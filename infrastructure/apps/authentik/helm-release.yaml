@@ -29,22 +29,34 @@ spec:
   values:
     # https://github.com/goauthentik/helm/blob/c51952b024451ee90fc3603fae24f39472b1b197/charts/authentik/templates/server-deployment.yaml#L77
     # https://github.com/goauthentik/helm/blob/c51952b024451ee90fc3603fae24f39472b1b197/charts/authentik/templates/worker-deployment.yaml#L80
-    # envValueFrom:
-    #   AUTHENIC_VAR_NAME:
-    #     secretKeyRef:
-    #       key: X
-    #       name: Y
+    envValueFrom:
+      AUTHENTIK_SECRET_KEY:
+        secretKeyRef:
+          name: authentik-env
+          key: AUTHENTIK_SECRET_KEY
+      AUTHENTIK_BOOTSTRAP_PASSWORD:
+        secretKeyRef:
+          name: authentik-env
+          key: AUTHENTIK_BOOTSTRAP_PASSWORD
+      AUTHENTIK_BOOTSTRAP_TOKEN:
+        secretKeyRef:
+          name: authentik-env
+          key: AUTHENTIK_BOOTSTRAP_TOKEN
+      POSTGRES_PASSWORD:
+        secretKeyRef:
+          name: authentik-postgresql
+          key: postgres-password
     env:
-      ENV_KEY: env_value
       # Set the email address for the default akadmin user.
       # https://goauthentik.io/docs/installation/automated-install#authentik_bootstrap_email
       AUTHENTIK_BOOTSTRAP_EMAIL: uk@ii.coop
-    envFrom:
-      # We may need the cm to exist beforehand, we don't really need it so disabling for now
-      # configMapRef:
-      #   name: authentik-env
-      - secretRef:
-          name: authentik-env
+    # While this works, I wantted to be more exlplicit, so we moved to envValueFrom above
+    # envFrom:
+    #   # We may need the cm to exist beforehand, we don't really need it so disabling for now
+    #   # configMapRef:
+    #   #   name: authentik-env
+    #   - secretRef:
+    #       name: authentik-env
     authentik:
       error_reporting:
         enabled: false
