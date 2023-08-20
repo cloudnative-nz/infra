@@ -3,8 +3,14 @@ apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
   name: authentik
-  namespace: authentik
+  namespace: flux-system
 spec:
+  targetNamespace: authentik
+  releaseName: authentik
+  storageNamespace: flux-system
+  # We install the namespace with the secret
+  # install:
+  #   createNamespace: false
   interval: 30m
   chart:
     spec:
@@ -29,12 +35,10 @@ spec:
     #       key: X
     #       name: Y
     env:
-      - name: ENV_KEY
-        value: env_value
+      ENV_KEY: env_value
       # Set the email address for the default akadmin user.
       # https://goauthentik.io/docs/installation/automated-install#authentik_bootstrap_email
-      - name: AUTHENTIK_BOOTSTRAP_EMAIL
-        value: uk@ii.coop
+      AUTHENTIK_BOOTSTRAP_EMAIL: uk@ii.coop
     envFrom:
       # We may need the cm to exist beforehand, we don't really need it so disabling for now
       # configMapRef:
