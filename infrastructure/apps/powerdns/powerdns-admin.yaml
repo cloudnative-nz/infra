@@ -61,13 +61,30 @@ spec:
       restartPolicy: Always
       containers:
         - env:
+            # https://github.com/PowerDNS-Admin/PowerDNS-Admin/blob/master/configs/docker_config.py
+            # OIDC_*, MAIL_*, SAML_*, SQLALCHEMY_*
+
+            - name: SQLALCHEMY_DATABASE_URI
+              valueFrom:
+                secretKeyRef:
+                  name: powerdns
+                  key: sql-url
             - name: SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: powerdns
                   key: api_key
-            - name: SQLALCHEMY_DATABASE_URI
-              value: sqlite:////data/powerdns-admin.db
+            - name: PDNS_SITE_NAME
+              value: powerdns.uk.cloudnative.coop Administration
+            - name: PDNS_URL
+              value: http://auth:8081
+            - name: PDNS_VERSION
+              value: 4.7.3
+            - name: PDNS_ZONES
+              value: |-
+                uk.cloudnative.coop
+                uk.ii.coop
+                uk.sharing.io
             - name: PDNS_ADMIN_USER
               valueFrom:
                 secretKeyRef:
@@ -79,17 +96,12 @@ spec:
                   name: powerdns
                   key: admin_password
             - name: PDNS_ADMIN_EMAIL
-              value: hh@ii.coop
-            - name: PDNS_VERSION
-              value: 4.7.3
-            - name: PDNS_URL
-              value: http://auth:8081
-            - name: PDNS_SITE_NAME
-              value: powerdns.ii.nz Administration
-            - name: PDNS_ZONES
-              value: |-
-                ii.nz
-                fop.nz
+              valueFrom:
+                secretKeyRef:
+                  name: powerdns
+                  key: admin_email
+            # - name: SQLALCHEMY_DATABASE_URI
+            #   value: sqlite:////data/powerdns-admin.db
           image: powerdnsadmin/pda-legacy:v0.3.0
           name: admin
           ports:
@@ -106,14 +118,14 @@ spec:
               name: powerdns-config
               subPath: pdns-poststart.py
           resources: {}
-          # FIXME: Better approach to dns-poststart
-          lifecycle:
-            postStart:
-              exec:
-                command:
-                  - "sh"
-                  - "-c"
-                  - "cd /app && /usr/bin/python3 pdns-poststart.py"
+          # # FIXME: Better approach to dns-poststart
+          # lifecycle:
+          #   postStart:
+          #     exec:
+          #       command:
+          #         - "sh"
+          #         - "-c"
+          #         - "cd /app && /usr/bin/python3 pdns-poststart.py"
       volumes:
         - name: powerdns-config
           configMap:

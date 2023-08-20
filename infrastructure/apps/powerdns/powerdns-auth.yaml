@@ -93,23 +93,6 @@ spec:
                   key: postgres_password
             - name: PDNS_SITE_NAME
               value: "PowerDNS for uk.cloudnative.coop!"
-            - name: PDNS_DOMAINS
-              value: "uk.cloudnative.coop uk.ii.coop uk.sharing.io"
-            - name: PDNS_ADMIN_USER
-              valueFrom:
-                secretKeyRef:
-                  name: powerdns
-                  key: admin_user
-            - name: PDNS_ADMIN_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: powerdns
-                  key: admin_password
-            - name: PDNS_ADMIN_EMAIL
-              valueFrom:
-                secretKeyRef:
-                  name: powerdns
-                  key: admin_email
           volumeMounts:
             # We could make another configmap
             # or even jinja template this out
