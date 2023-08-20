@@ -31,6 +31,10 @@ spec:
     env:
       - name: ENV_KEY
         value: env_value
+      # Set the email address for the default akadmin user.
+      # https://goauthentik.io/docs/installation/automated-install#authentik_bootstrap_email
+      - name: AUTHENTIK_BOOTSTRAP_EMAIL
+        value: uk@ii.coop
     envFrom:
       configMapRef:
         name: authentik-env

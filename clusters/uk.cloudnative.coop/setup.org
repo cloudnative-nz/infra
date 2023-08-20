@@ -773,6 +773,8 @@ source .envrc
 kubectl -n authentik \
     create secret generic authentik-env \
     --from-literal=ENV_SECRET=SECRET_VALUE \
+    --from-literal=AUTHENTIK_BOOTSTRAP_PASSWORD=$AUTHENTIK_BOOTSTRAP_PASSWORD \
+    --from-literal=AUTHENTIK_BOOTSTRAP_TOKEN=$AUTHENTIK_BOOTSTRAP_TOKEN \
     --from-literal=AUTHENTIK_SECRET_KEY=$AUTHENTIK_SECRET_KEY \
     --from-literal=AUTHENTIK_POSTGRESQL__PASSWORD=$AUTHENTIK_POSTGRESQL__PASSWORD \
     --dry-run=client -o yaml > \
