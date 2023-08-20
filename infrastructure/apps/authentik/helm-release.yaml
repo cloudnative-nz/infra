@@ -67,10 +67,10 @@ spec:
               pathType: Prefix
     postgresql:
       enabled: true
-      auth:
-        existingSecret: authentik-env
-        secretKeys:
-          adminPasswordKey: AUTHENTIK_POSTGRESQL__PASSWORD
-          userPasswordKey: AUTHENTIK_POSTGRESQL__PASSWORD
+      # auth:
+      #   existingSecret: authentik-env
+      #   secretKeys:
+      #     adminPasswordKey: AUTHENTIK_POSTGRESQL__PASSWORD
+      #     userPasswordKey: AUTHENTIK_POSTGRESQL__PASSWORD
     redis:
       enabled: true
