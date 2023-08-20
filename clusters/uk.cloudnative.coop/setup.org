@@ -774,6 +774,7 @@ kubectl -n authentik \
     create secret generic authentik-env \
     --from-literal=AUTHENTIK_BOOTSTRAP_PASSWORD=$AUTHENTIK_BOOTSTRAP_PASSWORD \
     --from-literal=AUTHENTIK_BOOTSTRAP_TOKEN=$AUTHENTIK_BOOTSTRAP_TOKEN \
+    --from-literal=AUTHENTIK_SECRET_KEY=$AUTHENTIK_SECRET_KEY \
     --dry-run=client -o yaml > \
      ./secrets/authentik-env.yaml
 #+end_src
