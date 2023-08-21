@@ -10,7 +10,7 @@ spec:
   storageNamespace: flux-system
   # We install the namespace with the secret
   install:
-    createNamespace: false
+    createNamespace: true
   interval: 30m
   chart:
     spec:
