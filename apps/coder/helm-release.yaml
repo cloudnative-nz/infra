@@ -83,12 +83,31 @@ spec:
             secretKeyRef:
               name: coder
               key: METAL_AUTH_TOKEN
-        # - name: CODER_ACCESS_URL
-        #  value: "https://coder.ii.nz"
+        # authentik
+        - name: CODER_OIDC_ISSUER_URL
+          value: "https://sso.uk.cloudnative.coop/application/o/coder/"
+        - name: CODER_OIDC_EMAIL_DOMAIN
+          value: "ii.coop,cncf.io,linuxfoundation.org"
+        - name: CODER_OIDC_EMAIL_FIELD
+          value: email
+        - name: CODER_OIDC_USERNAME_FIELD
+          value: preferred_username
+        - name: CODER_OIDC_SCOPES
+          value: openid,profile,email
+        - name: CODER_OIDC_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: coder
+              key: CODER_OIDC_CLIENT_ID
+        - name: CODER_OIDC_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: coder
+              key: CODER_OIDC_CLIENT_SECRET
         # - name: TF_LOG
         #   value: "debug"
-        # - name: CODER_VERBOSE
-        #   value: "true"
+        - name: CODER_VERBOSE
+          value: "true"
         # - name: TF_VAR_metal_project
         #   value: "82b5c425-8dd4-429e-ae0d-d32f265c63e4"
         # https://coder.com/docs/v2/latest/admin/git-providers#multiple-git-providers-enterprise
