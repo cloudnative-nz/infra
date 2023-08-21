@@ -11,6 +11,7 @@ resources:
   - minio.yaml
   - powerdns.yaml
   - authentik.yaml
+  - notary.yaml
   # - reflector.yaml
   # - external-dns.yaml
   # - capi.yaml

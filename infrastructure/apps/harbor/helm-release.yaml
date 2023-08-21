@@ -1,0 +1,35 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: harbor
+  namespace: flux-system
+spec:
+  targetNamespace: harbor
+  releaseName: harbor
+  storageNamespace: flux-system
+  # We install the namespace with the secret
+  install:
+    createNamespace: false
+  interval: 30m
+  chart:
+    spec:
+      chart: harbor
+      version: "1.12.4" # Current as of August 20, 2023
+      sourceRef:
+        kind: HelmRepository
+        name: harbor
+        namespace: flux-system
+      interval: 12h
+  # Quite a refactor three months ago: https://github.com/goauthentik/helm/pull/163
+  # https://artifacthub.io/packages/helm/goauthentik/authentik#values
+  # # -- see configuration options at https://goauthentik.io/docs/installation/configuration/
+  #  postgresql-password: A
+  #  postgresql-postgres-password: B
+  values:
+    externalURL: https://harbor.uk.cloudnative.coop
+    expose:
+      ingress:
+        hosts:
+          core: harbor.uk.cloudnative.coop
+          notary: notary.uk.cloudnative.coop
