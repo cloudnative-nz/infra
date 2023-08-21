@@ -45,13 +45,14 @@ spec:
           value: "true"
         - name: CODER_OAUTH2_GITHUB_ALLOW_EVERYONE
           value: "true"
-        # - name: CODER_OAUTH2_GITHUB_ALLOWED_ORGS
-        #   value: "ii,coder,kubermatic"
         - name: GITHUB_TOKEN
           valueFrom:
             secretKeyRef:
               name: coder
               key: GITHUB_TOKEN
+        # - name: CODER_OAUTH2_GITHUB_ALLOWED_ORGS
+        #   value: "ii,coder,kubermatic"
+        # github native
         - name: CODER_OAUTH2_GITHUB_CLIENT_ID
           valueFrom:
             secretKeyRef:
@@ -62,6 +63,7 @@ spec:
             secretKeyRef:
               name: coder
               key: CODER_OAUTH2_GITHUB_CLIENT_SECRET
+        # CODER_GITAUTH
         - name: CODER_GITAUTH_0_ID
           value: "github"
         - name: CODER_GITAUTH_0_TYPE
@@ -78,6 +80,7 @@ spec:
             secretKeyRef:
               name: coder
               key: CODER_GITAUTH_0_CLIENT_SECRET
+        # For provisioning within our Packet Project
         - name: METAL_AUTH_TOKEN
           valueFrom:
             secretKeyRef:
@@ -88,16 +91,16 @@ spec:
           value: "Sign in with sso.uk.cloudnative.coop"
         - name: CODER_OIDC_ISSUER_URL
           value: "https://sso.uk.cloudnative.coop/"
-        - name: CODER_OIDC_EMAIL_DOMAIN
-          value: "ii.coop,cncf.io,linuxfoundation.org"
+        # - name: CODER_OIDC_EMAIL_DOMAIN
+        #   value: "ii.coop,cncf.io,linuxfoundation.org"
         - name: CODER_OIDC_EMAIL_FIELD
           value: email
         - name: CODER_OIDC_IGNORE_EMAIL_VERIFIED
           value: "true"
-        - name: CODER_OIDC_GROUP_AUTO_CREATE
-          value: "true"
-        - name: CODER_OIDC_GROUP_REGEX_FILTER
-          value: "^my-group-.*$"
+        # - name: CODER_OIDC_GROUP_AUTO_CREATE
+        #   value: "true"
+        # - name: CODER_OIDC_GROUP_REGEX_FILTER
+        #   value: "^my-group-.*$"
         - name: CODER_OIDC_USERNAME_FIELD
           value: preferred_username
         - name: CODER_OIDC_SCOPES
@@ -114,8 +117,8 @@ spec:
               key: CODER_OIDC_CLIENT_SECRET
         # - name: TF_LOG
         #   value: "debug"
-        - name: CODER_VERBOSE
-          value: "true"
+        # - name: CODER_VERBOSE
+        #   value: "true"
         # - name: TF_VAR_metal_project
         #   value: "82b5c425-8dd4-429e-ae0d-d32f265c63e4"
         # https://coder.com/docs/v2/latest/admin/git-providers#multiple-git-providers-enterprise
