@@ -63,7 +63,6 @@ spec:
         - env:
             # https://github.com/PowerDNS-Admin/PowerDNS-Admin/blob/master/configs/docker_config.py
             # OIDC_*, MAIL_*, SAML_*, SQLALCHEMY_*
-
             - name: SQLALCHEMY_DATABASE_URI
               valueFrom:
                 secretKeyRef:
@@ -119,6 +118,8 @@ spec:
               value: https://sso.uk.cloudnative.coop/application/saml/powerdns/metadata/
             - name: SAML_LOGOUT_URL
               value: https://sso.uk.cloudnative.coop/application/saml/slo/powerdns/binding/redirect/
+            - name: SAML_DEBUG
+              value: "True"
             - name: SAML_ENABLED
               value: "True"
             - name: SAML_PATH
