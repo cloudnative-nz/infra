@@ -87,7 +87,7 @@ spec:
               name: coder
               key: METAL_AUTH_TOKEN
         # authentik
-        - name: CODER_OAUTH2_ENTERPRISE_BASE_URL
+        - name: CODER_OAUTH2_GITHUB_ENTERPRISE_BASE_URL
           value: https://sso.uk.cloudnative.coop
         - name: CODER_OAUTH2_GITHUB_CLIENT_ID
           valueFrom:
