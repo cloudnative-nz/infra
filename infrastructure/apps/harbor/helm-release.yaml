@@ -27,6 +27,10 @@ spec:
   #  postgresql-password: A
   #  postgresql-postgres-password: B
   values:
+    # The name of secret where admin password can be found.
+    # existingSecretAdminPassword: harbor
+    # The name of the key in the secret where to find harbor admin password Harbor
+    # existingSecretAdminPasswordKey: HARBOR_ADMIN_PASSWORD
     externalURL: https://harbor.uk.cloudnative.coop
     expose:
       ingress:
