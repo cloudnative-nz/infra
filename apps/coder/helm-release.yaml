@@ -89,8 +89,8 @@ spec:
         # authentik
         - name: CODER_OIDC_SIGN_IN_TEXT
           value: "Sign in with sso.uk.cloudnative.coop"
-        # - name: CODER_OIDC_ISSUER_URL
-        #   value: "https://sso.uk.cloudnative.coop/"
+        - name: CODER_OIDC_ISSUER_URL
+          value: "https://sso.uk.cloudnative.coop/"
         # - name: CODER_OIDC_EMAIL_DOMAIN
         #   value: "ii.coop,cncf.io,linuxfoundation.org"
         - name: CODER_OIDC_EMAIL_FIELD
