@@ -53,16 +53,16 @@ spec:
         # - name: CODER_OAUTH2_GITHUB_ALLOWED_ORGS
         #   value: "ii,coder,kubermatic"
         # github native
-        - name: CODER_OAUTH2_GITHUB_CLIENT_ID
-          valueFrom:
-            secretKeyRef:
-              name: coder
-              key: CODER_OAUTH2_GITHUB_CLIENT_ID
-        - name: CODER_OAUTH2_GITHUB_CLIENT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: coder
-              key: CODER_OAUTH2_GITHUB_CLIENT_SECRET
+        # - name: CODER_OAUTH2_GITHUB_CLIENT_ID
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: coder
+        #       key: CODER_OAUTH2_GITHUB_CLIENT_ID
+        # - name: CODER_OAUTH2_GITHUB_CLIENT_SECRET
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: coder
+        #       key: CODER_OAUTH2_GITHUB_CLIENT_SECRET
         # CODER_GITAUTH
         - name: CODER_GITAUTH_0_ID
           value: "github"
@@ -87,6 +87,18 @@ spec:
               name: coder
               key: METAL_AUTH_TOKEN
         # authentik
+        - name: CODER_OAUTH2_ENTERPRISE_BASE_URL
+          value: https://sso.uk.cloudnative.coop
+        - name: CODER_OAUTH2_GITHUB_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: coder
+              key: CODER_OIDC_CLIENT_ID
+        - name: CODER_OAUTH2_GITHUB_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: coder
+              key: CODER_OIDC_CLIENT_SECRET
         # - name: CODER_OIDC_SIGN_IN_TEXT
         #   value: "Sign in with sso.uk.cloudnative.coop"
         # - name: CODER_OIDC_ISSUER_URL
