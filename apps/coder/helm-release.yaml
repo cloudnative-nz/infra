@@ -84,12 +84,16 @@ spec:
               name: coder
               key: METAL_AUTH_TOKEN
         # authentik
+        - name: CODER_OIDC_SIGN_IN_TEXT
+          value: "Sign in with sso.uk.cloudnative.coop"
         - name: CODER_OIDC_ISSUER_URL
           value: "https://sso.uk.cloudnative.coop/application/o/coder/"
         - name: CODER_OIDC_EMAIL_DOMAIN
           value: "ii.coop,cncf.io,linuxfoundation.org"
         - name: CODER_OIDC_EMAIL_FIELD
           value: email
+        - name: CODER_OIDC_IGNORE_EMAIL_VERIFIED
+          value: "true"
         - name: CODER_OIDC_USERNAME_FIELD
           value: preferred_username
         - name: CODER_OIDC_SCOPES
