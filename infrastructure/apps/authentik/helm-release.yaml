@@ -50,6 +50,7 @@ spec:
       # Set the email address for the default akadmin user.
       # https://goauthentik.io/docs/installation/automated-install#authentik_bootstrap_email
       AUTHENTIK_BOOTSTRAP_EMAIL: uk@ii.coop
+      AUTHENTIK_ERROR_REPORTING__ENABLED: "true"
     # While this works, I wantted to be more exlplicit, so we moved to envValueFrom above
     # envFrom:
     #   # We may need the cm to exist beforehand, we don't really need it so disabling for now

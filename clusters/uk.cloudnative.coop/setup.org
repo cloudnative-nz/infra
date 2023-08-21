@@ -661,6 +661,7 @@ kubectl -n powerdns \
     --from-literal=admin_user=${PDNS_ADMIN_USER} \
     --from-literal=admin_email=${PDNS_ADMIN_EMAIL} \
     --from-literal=admin_password=${PDNS_ADMIN_PASSWORD} \
+    --from-literal=sql_url=postgresql://postgres:${PDNS_DB_PASSWORD}@pdns-db-postgresql:5432/postgres \
     --from-literal=postgres_password=${PDNS_DB_PASSWORD} \
     --dry-run=client -o yaml > \
      ./secrets/powerdns.yaml

@@ -68,7 +68,17 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: powerdns
-                  key: sql-url
+                  key: sql_url
+            - name: SQLALCHEMY_ENGINE_OPTIONS
+              # https://docs.sqlalchemy.org/en/20/core/engines.html
+              # echo{_pool} can also be debug
+              # https://docs.sqlalchemy.org/en/20/core/engines.html#sqlalchemy.create_engine.params.execution_options
+              # https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Connection.execution_options
+              value: |-
+                {
+                  "echo": "True"
+                  "echo_pool": "True"
+                }
             - name: SECRET_KEY
               valueFrom:
                 secretKeyRef:
