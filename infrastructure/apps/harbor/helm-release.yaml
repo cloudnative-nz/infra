@@ -32,6 +32,9 @@ spec:
     # existingSecretAdminPassword: harbor
     # The name of the key in the secret where to find harbor admin password Harbor
     # existingSecretAdminPasswordKey: HARBOR_ADMIN_PASSWORD
+    tls:
+      enable: true
+      certSource: none
     externalURL: https://harbor.uk.cloudnative.coop
     expose:
       ingress:
