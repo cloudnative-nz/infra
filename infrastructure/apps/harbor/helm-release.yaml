@@ -27,6 +27,7 @@ spec:
   #  postgresql-password: A
   #  postgresql-postgres-password: B
   values:
+    # OIDC might need to be in CONFIG_OVERWRITE_JSON which might be in 1.13.0
     # The name of secret where admin password can be found.
     # existingSecretAdminPassword: harbor
     # The name of the key in the secret where to find harbor admin password Harbor
@@ -34,6 +35,7 @@ spec:
     externalURL: https://harbor.uk.cloudnative.coop
     expose:
       ingress:
+        className: nginx
         hosts:
           core: harbor.uk.cloudnative.coop
           notary: notary.uk.cloudnative.coop
