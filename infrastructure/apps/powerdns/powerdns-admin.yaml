@@ -112,6 +112,43 @@ spec:
                   key: admin_email
             # - name: SQLALCHEMY_DATABASE_URI
             #   value: sqlite:////data/powerdns-admin.db
+            # https://goauthentik.io/integrations/services/powerdns-admin/
+            - name: SAML_CERT
+              value: "/saml.crt"
+            - name: SAML_METADATA_URL
+              value: https://sso.uk.cloudnative.coop/application/saml/powerdns/metadata/
+            - name: SAML_LOGOUT_URL
+              value: https://sso.uk.cloudnative.coop/application/saml/slo/powerdns/binding/redirect/
+            - name: SAML_ENABLED
+              value: "True"
+            - name: SAML_PATH
+              value: os.path.join(os.path.dirname(file), 'saml')
+            - name: SAML_METADATA_CACHE_LIFETIME
+              value: "1"
+            - name: SAML_SP_ENTITY_ID
+              value: pdns-admin
+            - name: SAML_SP_CONTACT_NAME
+              value: Hippie Hacker
+            - name: SAML_SP_CONTACT_MAIL
+              value: hh@ii.coop
+            - name: SAML_NAMEID_FORMAT
+              value: urn:oasis:names:tc:SAML:2.0:nameid-format:persistent
+            - name: SAML_ATTRIBUTE_USERNAME
+              value: http://schemas.goauthentik.io/2021/02/saml/username
+            - name: SAML_ATTRIBUTE_NAME
+              value: http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name
+            - name: SAML_ATTRIBUTE_EMAIL
+              value: http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress
+            - name: SAML_ATTRIBUTE_GROUP
+              value: http://schemas.xmlsoap.org/claims/Group
+            - name: SAML_GROUP_ADMIN_NAME
+              value: ???
+            - name: SAML_SIGN_REQUEST
+              value: "False"
+            - name: SAML_ASSERTION_ENCRYPTED
+              value: "False"
+            - name: SAML_WANT_MESSAGE_SIGNED
+              value: "False"
           image: powerdnsadmin/pda-legacy:v0.3.0
           name: admin
           ports:
@@ -127,6 +164,9 @@ spec:
             - mountPath: /app/pdns-poststart.py
               name: powerdns-config
               subPath: pdns-poststart.py
+            - mountPath: /saml.crt
+              name: powerdns-secrets
+              subPath: authentik_cert
           resources: {}
           # # FIXME: Better approach to dns-poststart
           # lifecycle:
@@ -138,11 +178,19 @@ spec:
           #         - "cd /app && /usr/bin/python3 pdns-poststart.py"
       volumes:
         - name: powerdns-config
+          defaultMode: 0755
           configMap:
             name: jinja-templates
+        # - name: powerdns-config
+        #   configMap:
+        #     name: jinja-templates
         - name: powerdns-admin
           persistentVolumeClaim:
             claimName: powerdns-admin
+        - name: powerdns-secrets
+          secret:
+            secretName: powerdns
+          # note: the leading zero means this number is in octal representation: do not remove it
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
