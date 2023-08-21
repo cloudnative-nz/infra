@@ -58,6 +58,8 @@ spec:
     #   - secretRef:
     #       name: authentik-env
     authentik:
+      # Debugging
+      log_level: trace
       error_reporting:
         enabled: false
       # secret_key: "BJRl0HKI7i3T0XZOQiBYm9kDsx9WgzhaeiDAyyAq753MudVlcJ"
