@@ -11,7 +11,7 @@ app = create_app()
 ctx = app.app_context()
 ctx.push()
 
-db.session.add(Setting("pdns_api_key", os.environ["PDNS_AUTH_API_KEY"]))
+db.session.add(Setting("pdns_api_key", os.environ["SECRET_KEY"]))
 db.session.add(Setting("allow_user_create_domain", True))
 db.session.add(Setting("otp_field_enabled", False))
 db.session.add(Setting("session_timeout", 60))
