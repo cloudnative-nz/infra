@@ -27,8 +27,9 @@ metadata:
 spec:
   prune: true
   interval: 5m
-  dependsOn:
-    - name: coder-db
+  # Speed up iteration
+  # dependsOn:
+  #   - name: coder-db
   path: "./apps/coder"
   sourceRef:
     kind: GitRepository
