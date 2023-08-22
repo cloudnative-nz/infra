@@ -656,6 +656,11 @@ Password : $MINI_ROOT_PASSWORD
 ** minio-env-config
 *** create minio secret
 This is basically a file mapping for an env file called config.env
+
+MINIO_ROOT_USER / MINIO_ACCESS_KEY must be at least 3 characters long... we'll default to "root"
+
+NOTE: Access key length should be at least 3, and secret key length at least 8 characters
+
 #+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\nexport KUBECONFIG\n" :sync :results silent
 source .envrc
 kubectl -n minio \
