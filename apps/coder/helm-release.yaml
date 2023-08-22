@@ -119,8 +119,9 @@ spec:
         #   value: "^my-group-.*$"
         # - name: CODER_OIDC_USERNAME_FIELD
         #   value: preferred_username
-        # - name: CODER_OIDC_SCOPES
-        #   value: openid,profile,email
+        #   https://coder.com/docs/v2/latest/admin/auth#group-sync-enterprise
+        - name: CODER_OIDC_SCOPES
+          value: openid,profile,email,groups
         - name: CODER_OIDC_CLIENT_ID
           valueFrom:
             secretKeyRef:
