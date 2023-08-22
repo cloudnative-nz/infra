@@ -53,16 +53,17 @@ spec:
         # - name: CODER_OAUTH2_GITHUB_ALLOWED_ORGS
         #   value: "ii,coder,kubermatic"
         # github native
-        - name: CODER_OAUTH2_GITHUB_CLIENT_ID
-          valueFrom:
-            secretKeyRef:
-              name: coder
-              key: CODER_OAUTH2_GITHUB_CLIENT_ID
-        - name: CODER_OAUTH2_GITHUB_CLIENT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: coder
-              key: CODER_OAUTH2_GITHUB_CLIENT_SECRET
+        # DISABLED so we can force use of authentik
+        # - name: CODER_OAUTH2_GITHUB_CLIENT_ID
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: coder
+        #       key: CODER_OAUTH2_GITHUB_CLIENT_ID
+        # - name: CODER_OAUTH2_GITHUB_CLIENT_SECRET
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: coder
+        #       key: CODER_OAUTH2_GITHUB_CLIENT_SECRET
         # CODER_GITAUTH
         - name: CODER_GITAUTH_0_ID
           value: "github"
