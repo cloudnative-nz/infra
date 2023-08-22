@@ -671,13 +671,15 @@ source .envrc
 kubectl -n minio \
     create secret generic minio-env-config \
     --from-literal=config.env="export MINIO_ROOT_USER=$MINIO_ROOT_USER
-export MINIO_ROOT_PASSWORD=$MINIO_ROOT_PASSWORD
-export MINIO_ACCESS_KEY=$MINIO_ROOT_USER
-export MINIO_SECRET_KEY=$MINIO_ROOT_PASSWORD" \
+export MINIO_ROOT_PASSWORD=$MINIO_ROOT_PASSWORD \
+export MINIO_IDENTITY_OPENID_CLIENT_ID=$MINIO_IDENTITY_OPENID_CLIENT_ID \
+export MINIO_IDENTITY_OPENID_CLIENT_SECRET=$MINIO_IDENTITY_OPENID_CLIENT_SECRET" \
     --dry-run=client -o yaml > \
      ./secrets/minio-env-config.yaml
 #+end_src
 
+# export MINIO_ACCESS_KEY=$MINIO_ROOT_USER
+# export MINIO_SECRET_KEY=$MINIO_ROOT_PASSWORD" \
 *** encrypt minio secret
 #+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\n" :results silent :sync
 sops --encrypt --in-place ./secrets/minio-env-config.yaml
