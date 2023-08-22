@@ -8,7 +8,7 @@ resources:
   - longhorn.yaml
   - coder.yaml
   - vcluster.yaml
-  - minio.yaml
+  - minio-operator.yaml
   - powerdns.yaml
   - authentik.yaml
   - harbor.yaml
