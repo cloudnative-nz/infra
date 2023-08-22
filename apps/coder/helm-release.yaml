@@ -41,10 +41,10 @@ spec:
           value: "0.0.0.0:2112"
         - name: CODER_TELEMETRY
           value: "false"
-        - name: CODER_OAUTH2_GITHUB_ALLOW_SIGNUPS
-          value: "true"
-        - name: CODER_OAUTH2_GITHUB_ALLOW_EVERYONE
-          value: "true"
+        # - name: CODER_OAUTH2_GITHUB_ALLOW_SIGNUPS
+        #   value: "true"
+        # - name: CODER_OAUTH2_GITHUB_ALLOW_EVERYONE
+        #   value: "true"
         - name: GITHUB_TOKEN
           valueFrom:
             secretKeyRef:
