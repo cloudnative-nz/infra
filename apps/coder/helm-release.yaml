@@ -135,6 +135,8 @@ spec:
         #   value: "debug"
         - name: CODER_VERBOSE
           value: "true"
+        - name: CODER_DISABLE_PASSWORD_AUTH
+          value: "true"
         # - name: TF_VAR_metal_project
         #   value: "82b5c425-8dd4-429e-ae0d-d32f265c63e4"
         # https://coder.com/docs/v2/latest/admin/git-providers#multiple-git-providers-enterprise
