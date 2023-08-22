@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  name: minio-wildcard
+  namespace: minio
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: "*.s3.cloudnative.nz"
+      http:
+        paths:
+          - backend:
+              service:
+                name: minio
+                port:
+                  name: https-minio
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - "*.s3.cloudnative.nz"
+      secretName: tls-minio-external

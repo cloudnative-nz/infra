@@ -1,0 +1,17 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: tls-minio-external
+  namespace: minio
+spec:
+  issuerRef:
+    name: letsencrypt-pdns
+    group: cert-manager.io
+    kind: ClusterIssuer
+  commonName: "*.minio.cloudnative.nz"
+  secretName: tls-minio-external
+  dnsNames:
+    - minio.cloudnative.nz
+    - "*.minio.cloudnative.nz"
+    - s3.cloudnative.nz
+    - "*.s3.cloudnative.nz"

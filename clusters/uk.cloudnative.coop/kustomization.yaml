@@ -12,6 +12,7 @@ resources:
   - powerdns.yaml
   - authentik.yaml
   - harbor.yaml
+  - minio-tenant.yaml
   # - reflector.yaml
   # - external-dns.yaml
   # - capi.yaml
