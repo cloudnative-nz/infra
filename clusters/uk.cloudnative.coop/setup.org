@@ -654,6 +654,11 @@ https://minio.uk.cloudnative.coop/login
 Username :  $MINIO_ROOT_USER
 Password : $MINI_ROOT_PASSWORD
 ** minio-env-config
+This will eventually be a file within the minio-pool:
+#+begin_src shell
+ kubectl -n minio exec pod/minio-pool-0-0 cat /tmp/minio/config.env
+#+end_src
+
 *** create minio secret
 This is basically a file mapping for an env file called config.env
 
