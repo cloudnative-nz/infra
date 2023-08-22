@@ -476,6 +476,47 @@ kubectl wait --for=condition=Ready \
 scp root@$SPACE_TLD:/etc/kubernetes/admin.conf $KUBECONFIG
 #+end_src
 
+** increase maxPods
+Our nodes usually run a lot of pods, so the default of 110 is way to low, so we bump it by a magnitude of roughly ten.
+
+https://prefetch.net/blog/2018/02/10/the-kubernetes-110-pod-limit-per-node/
+
+It needs to be set in the kublet config file:
+https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
+
+Ideally we set this via kubeadm, but for now manually add it and restart kubelet.
+#+begin_src shell :eval never
+echo maxPods: 1024 >> /var/lib/kubelet/config.yaml
+#+end_src
+
+#+begin_src shell
+grep maxPods /var/lib/kubelet/config.yaml
+#+end_src
+
+#+RESULTS:
+#+begin_example
+maxPods: 1024
+#+end_example
+
+#+begin_src shell :eval never
+systemctl restart kubelet
+#+end_src
+
+#+begin_src shell
+kubectl describe nodes  | grep Capacity: -A6
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Capacity:
+  cpu:                64
+  ephemeral-storage:  227158056Ki
+  hugepages-1Gi:      0
+  hugepages-2Mi:      0
+  memory:             263515040Ki
+  pods:               1024
+#+end_example
+
 * Bootstrap Fux + Sops Encryption
 ** generate a github TOKEN
 https://github.com/settings/tokens/new
