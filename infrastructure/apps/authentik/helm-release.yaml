@@ -63,7 +63,7 @@ spec:
       # Debugging
       log_level: trace
       error_reporting:
-        enabled: false
+        enabled: true
       # secret_key: "BJRl0HKI7i3T0XZOQiBYm9kDsx9WgzhaeiDAyyAq753MudVlcJ"
       # postgresql:
       #   password: "/erJXa5usdMmtWoR3/rbmhjWNjg1/neSpjn2E8ipme0/znHP"
