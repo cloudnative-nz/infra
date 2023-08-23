@@ -94,6 +94,9 @@ spec:
           nginx.ingress.kubernetes.io/ssl-redirect: "true"
           # nginx.ingress.kubernetes.io/ssl-passthrough: "true"
           nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+          # https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#custom-max-body-size
+          # Due to longhorn minio backups for abcs.news giving a 413 error: Entity Too Large
+          nginx.ingress.kubernetes.io/proxy-body-size: 64m
         pathType: Prefix
         path: /
         tls:
