@@ -654,6 +654,35 @@ sops --encrypt --in-place ./secrets/cert-manager-pdns.yaml
 https://minio.uk.cloudnative.coop/login
 Username :  $MINIO_ROOT_USER
 Password : $MINI_ROOT_PASSWORD
+** mc alias
+#+begin_src shell
+mc alias set min https://s3.uk.cloudnative.coop $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Added `min` successfully.
+#+end_example
+** mc mb min
+#+begin_src shell
+mc mb min/sharingio
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Bucket created successfully `uk/sharingio`.
+#+end_example
+
+** mc ls min
+#+begin_src shell
+mc ls min
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[2023-08-23 10:56:26 BST]     0B sharingio/
+#+end_example
+
 ** minio-env-config
 This will eventually be a file within the minio-pool:
 #+begin_src shell
@@ -685,20 +714,28 @@ export MINIO_IDENTITY_OPENID_CLIENT_SECRET=$MINIO_IDENTITY_OPENID_CLIENT_SECRET"
 #+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\n" :results silent :sync
 sops --encrypt --in-place ./secrets/minio-env-config.yaml
 #+end_src
-** longhorn-minio
 *** the secret
-Longhorn wants a minio secret to backup to
+It's a single key, but it contains the text of the env.
 #+begin_src shell
- kubectl -n longhorn get secret
+ kubectl -n minio describe secret minio-env-config
 #+end_src
 
 #+RESULTS:
 #+begin_example
-NAME                   TYPE                DATA   AGE
-longhorn-webhook-ca    kubernetes.io/tls   2      5d16h
-longhorn-webhook-tls   kubernetes.io/tls   2      5d16h
+Name:         minio-env-config
+Namespace:    minio
+Labels:       kustomize.toolkit.fluxcd.io/name=secrets
+              kustomize.toolkit.fluxcd.io/namespace=flux-system
+Annotations:  <none>
+
+Type:  Opaque
+
+Data
+====
+config.env:  319 bytes
 #+end_example
 
+** longhorn-minio
 *** create minio secret
 This is basically a file mapping for an env file called config.env
 
@@ -711,7 +748,7 @@ source .envrc
 kubectl -n longhorn \
     create secret generic longhorn-minio \
     --from-literal=AWS_ACCESS_KEY_ID="$MINIO_ROOT_USER" \
-    --from-literal=AWS_ACCESS_ACCESS_KEY="$MINIO_ROOT_PASSWORD" \
+    --from-literal=AWS_SECRET_ACCESS_KEY="$MINIO_ROOT_PASSWORD" \
     --from-literal=AWS_ENDPOINTS="https://s3.uk.cloudnative.coop" \
     --dry-run=client -o yaml > \
      ./secrets/longhorn-minio.yaml
@@ -720,15 +757,37 @@ kubectl -n longhorn \
 #+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\n" :results silent :sync
 sops --encrypt --in-place ./secrets/longhorn-minio.yaml
 #+end_src
-** OIDC
+*** the secret
+Longhorn wants a minio secret to backup to
 #+begin_src shell
-mc ls uk
+ kubectl -n longhorn describe secret longhorn-minio
 #+end_src
 
 #+RESULTS:
 #+begin_example
-[2023-08-20 23:20:40 BST]     0B foo/
-[2023-08-20 22:40:27 BST]     0B test/
+Name:         longhorn-minio
+Namespace:    longhorn
+Labels:       kustomize.toolkit.fluxcd.io/name=secrets
+              kustomize.toolkit.fluxcd.io/namespace=flux-system
+Annotations:  <none>
+
+Type:  Opaque
+
+Data
+====
+AWS_ACCESS_ACCESS_KEY:  12 bytes
+AWS_ACCESS_KEY_ID:      4 bytes
+AWS_ENDPOINTS:          30 bytes
+#+end_example
+
+** OIDC
+#+begin_src shell
+mc mb uk/abcs
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Bucket created successfully `uk/abcs`.
 #+end_example
 
 https://min.io/docs/minio/linux/operations/external-iam/configure-openid-external-identity-management.html
