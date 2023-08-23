@@ -962,6 +962,23 @@ sops --encrypt --in-place ./secrets/authentik-env.yaml
 *** get authentik Self-signed certificate
 https://sso.uk.cloudnative.coop/if/admin/#/crypto/certificates
 
+* Ghost
+** ghost-secret
+https://github.com/bitnami/charts/blob/main/bitnami/mysql/values.yaml#L138-L141
+#+begin_src shell :prologue "(\nexport KUBECONFIG" :epilogue "\n) 2>&1\n\:\n" :results none
+kubectl create secret generic ghost-passwords -n ghost \
+    --from-literal=ghost-password=$GHOST_PASSWORD \
+    --from-literal=smtp-password=$GHOST_SMTP_PASSWORD \
+    --from-literal=mysql-root-password=$GHOST_MYSQL_ROOT_PASSWORD \
+    --from-literal=mysql-password=$GHOST_MYSQL_ROOT_PASSWORD \
+    -o yaml --dry-run=client > secrets/ghost.yaml
+# kubectl apply -f ./ghost-passwords.yaml
+#+end_src
+** encrypt and commit ghost secret
+We need to encrypt the pdns-secret with sops and commit/push so flux can decrypt and apply it
+#+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\n" :results silent :sync
+sops --encrypt --in-place secrets/ghost.yaml
+#+end_src
 * harbor
 https://goharbor.io/docs/1.10/administration/configure-authentication/oidc-auth/
 
