@@ -1,0 +1,47 @@
+existingSecret: ghost-passwords
+extraEnvVars:
+  - name: LOG_LEVEL
+    value: DEBUG
+ghostBlogTitle: ABCS News
+ghostEmail: chris@mcclimans.net
+ghostEnableHttps: false
+ghostHost: abcs.news
+ghostPath: /
+ghostUsername: chris
+global:
+  storageClass: longhorn
+image:
+  registry: docker.io
+  repository: bitnami/ghost
+  tag: 5.53.2-debian-11-r0
+ingress:
+  enabled: false
+  extraHosts: ghost.abcs.news
+  hostname: abcs.news
+  ingressClassName: nginx
+  secrets:
+    - certificate: CAN WE JUST USE EXISTING SECRET
+      key: RATHER NOT PUT KEY HERE
+      name: abcs.news-tls
+  tls: false
+mysql:
+  auth:
+    existingSecret: ghost-passwords
+  primary:
+    persistence:
+      accessModes:
+        - ReadWriteMany
+      enabled: true
+      size: 20Gi
+      storageClass: longhorn
+persistence:
+  accessModes:
+    - ReadWriteMany
+  enabled: true
+  size: 10Gi
+service:
+  type: ClusterIP
+smtpHost: smtp.fastmail.com
+smtpPort: "465"
+smtpProtocol: ssl
+smtpUser: chris@mcclimans.net

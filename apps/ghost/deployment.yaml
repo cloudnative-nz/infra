@@ -1,0 +1,135 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ghost
+  namespace: ghost
+  labels:
+    app.kubernetes.io/component: ghost
+    app.kubernetes.io/instance: ghost
+    app.kubernetes.io/name: ghost
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: ghost
+      app.kubernetes.io/name: ghost
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: ghost
+        app.kubernetes.io/instance: ghost
+        app.kubernetes.io/name: ghost
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/instance: ghost
+                    app.kubernetes.io/name: ghost
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+      containers:
+        - name: ghost
+          image: docker.io/bitnami/ghost:5.59.4-debian-11-r0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+          volumeMounts:
+            - mountPath: /bitnami/ghost
+              name: ghost-data
+          ports:
+            - containerPort: 2368
+              name: http
+              protocol: TCP
+          # livenessProbe:
+          #   failureThreshold: 6
+          #   httpGet:
+          #     path: /
+          #     port: http
+          #     scheme: HTTP
+          #   initialDelaySeconds: 120
+          #   periodSeconds: 10
+          #   successThreshold: 1
+          #   timeoutSeconds: 5
+          # readinessProbe:
+          #   failureThreshold: 6
+          #   httpGet:
+          #     path: /
+          #     port: http
+          #     scheme: HTTP
+          #   initialDelaySeconds: 30
+          #   periodSeconds: 5
+          #   successThreshold: 1
+          #   timeoutSeconds: 3
+          resources:
+            limits: {}
+            requests: {}
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: ALLOW_EMPTY_PASSWORD
+              value: "no"
+            - name: GHOST_DATABASE_HOST
+              value: ghost-mysql
+            - name: GHOST_DATABASE_PORT_NUMBER
+              value: "3306"
+            - name: GHOST_DATABASE_NAME
+              value: bitnami_ghost
+            - name: GHOST_DATABASE_USER
+              value: bn_ghost
+            - name: GHOST_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: mysql-password
+                  name: ghost-passwords
+            - name: GHOST_HOST
+              value: ${GHOST_HOST:=abcs.news}
+            - name: GHOST_PORT_NUMBER
+              value: "2368"
+            - name: GHOST_USERNAME
+              value: ${GHOST_USERNAME:=hh}
+            - name: GHOST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: ghost-password
+                  name: ghost-passwords
+            - name: GHOST_EMAIL
+              value: ${GHOST_EMAIL:=chris@mcclimans.net}
+            - name: GHOST_BLOG_TITLE
+              value: ${GHOST_BLOG_TITLE:=blog_title}
+            - name: GHOST_ENABLE_HTTPS
+              value: "yes"
+            - name: GHOST_EXTERNAL_HTTP_PORT_NUMBER
+              value: "80"
+            - name: GHOST_EXTERNAL_HTTPS_PORT_NUMBER
+              value: "443"
+            - name: GHOST_SKIP_BOOTSTRAP
+              value: "no"
+            - name: GHOST_SMTP_HOST
+              value: ${GHOST_SMTP_HOST:=smtp.fastmail.com}
+            - name: GHOST_SMTP_PORT
+              value: "465"
+            - name: GHOST_SMTP_USER
+              value: ${GHOST_SMTP_USER:=chris@mcclimans.net}
+            - name: GHOST_SMTP_PROTOCOL
+              value: "ssl"
+            - name: GHOST_SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: smtp-password
+                  name: ghost-passwords
+            - name: LOG_LEVEL
+              value: DEBUG
+      securityContext:
+        fsGroup: 1001
+      serviceAccountName: ghost
+      volumes:
+        - name: ghost-data
+          persistentVolumeClaim:
+            claimName: ghost
