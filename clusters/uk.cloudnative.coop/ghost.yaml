@@ -1,0 +1,20 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: ghost
+  namespace: flux-system
+spec:
+  prune: true
+  interval: 5m
+  # dependsOn:
+  #   - name: secrets
+  path: "./apps/ghost"
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  # postBuild:
+  #   substitute:
+  #     CODER_HOST: space.uk.cloudnative.coop
+  #     CODER_ACCESS_URL: https://space.uk.cloudnative.coop
+  #     CODER_WILDCARD_DOMAIN: "uk.cloudnative.coop"
