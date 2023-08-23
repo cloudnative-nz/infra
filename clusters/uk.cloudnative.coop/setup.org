@@ -649,7 +649,8 @@ We need to encrypt the pdns-secret with sops and commit/push so flux can decrypt
 sops --encrypt --in-place ./secrets/cert-manager-pdns.yaml
 #+end_src
 
-* minio user / password
+* minio
+** Login url + user / password
 https://minio.uk.cloudnative.coop/login
 Username :  $MINIO_ROOT_USER
 Password : $MINI_ROOT_PASSWORD
@@ -683,6 +684,41 @@ export MINIO_IDENTITY_OPENID_CLIENT_SECRET=$MINIO_IDENTITY_OPENID_CLIENT_SECRET"
 *** encrypt minio secret
 #+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\n" :results silent :sync
 sops --encrypt --in-place ./secrets/minio-env-config.yaml
+#+end_src
+** longhorn-minio
+*** the secret
+Longhorn wants a minio secret to backup to
+#+begin_src shell
+ kubectl -n longhorn get secret
+#+end_src
+
+#+RESULTS:
+#+begin_example
+NAME                   TYPE                DATA   AGE
+longhorn-webhook-ca    kubernetes.io/tls   2      5d16h
+longhorn-webhook-tls   kubernetes.io/tls   2      5d16h
+#+end_example
+
+*** create minio secret
+This is basically a file mapping for an env file called config.env
+
+MINIO_ROOT_USER / MINIO_ACCESS_KEY must be at least 3 characters long... we'll default to "root"
+
+NOTE: Access key length should be at least 3, and secret key length at least 8 characters
+
+#+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\nexport KUBECONFIG\n" :sync :results silent
+source .envrc
+kubectl -n longhorn \
+    create secret generic longhorn-minio \
+    --from-literal=AWS_ACCESS_KEY_ID="$MINIO_ROOT_USER" \
+    --from-literal=AWS_ACCESS_ACCESS_KEY="$MINIO_ROOT_PASSWORD" \
+    --from-literal=AWS_ENDPOINTS="https://s3.uk.cloudnative.coop" \
+    --dry-run=client -o yaml > \
+     ./secrets/longhorn-minio.yaml
+#+end_src
+*** encrypt minio secret
+#+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\n" :results silent :sync
+sops --encrypt --in-place ./secrets/longhorn-minio.yaml
 #+end_src
 ** OIDC
 #+begin_src shell
