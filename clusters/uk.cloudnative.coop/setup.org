@@ -981,12 +981,14 @@ sops --encrypt --in-place secrets/ghost.yaml
 #+end_src
 ** abcs.news-tls
 Need to setup another issuer over here... maybe the http one?
-#+begin_src shell
+#+begin_src shell :results silent
 kubectl --kubeconfig=$HOME/.kube/config-sharing.io -n ghost get secrets abcs.news-tls -o yaml > secrets/abcs.news-tls.yaml
 #+end_src
+
+
 ** encrypt and commit tls-secret
 #+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\n" :results silent :sync
-sops --encrypt --in-place secrets/abcs.news-tls.yaml
+sops --encrypt --encrypted-regex '^(data|stringData)$' --in-place secrets/abcs.news-tls.yaml
 #+end_src
 * harbor
 https://goharbor.io/docs/1.10/administration/configure-authentication/oidc-auth/
