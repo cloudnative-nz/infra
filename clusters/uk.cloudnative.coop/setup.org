@@ -184,7 +184,8 @@ DEBIAN_FRONTENT=noninteractive apt-get install -y \
     docker-ce-cli \
     kubelet \
     kubeadm \
-    open-iscsi
+    open-iscsi \
+    nfs-common
 #+end_src
 
 ** cilium
@@ -985,11 +986,31 @@ Need to setup another issuer over here... maybe the http one?
 kubectl --kubeconfig=$HOME/.kube/config-sharing.io -n ghost get secrets abcs.news-tls -o yaml > secrets/abcs.news-tls.yaml
 #+end_src
 
-
 ** encrypt and commit tls-secret
 #+begin_src shell :epilogue "\n) 2>&1\n:\n" :prologue "(\n" :results silent :sync
 sops --encrypt --encrypted-regex '^(data|stringData)$' --in-place secrets/abcs.news-tls.yaml
 #+end_src
+** copy abcs.news-tls from old to new cluster
+Need to setup another issuer over here... maybe the http one?
+#+begin_src shell :results silent
+kubectl --kubeconfig=$HOME/.kube/config-sharing.io -n ghost get secrets abcs.news-tls -o yaml | kubectl --kubeconfig=$HOME/.kube/config-uk.cloudnative.coop apply -f -
+#+end_src
+** pvcs
+
+Looks like we need to ensure *mount.nfs* is available from nfs-common.
+
+#+begin_example
+Events:
+  Type     Reason                  Age                 From                     Message
+  ----     ------                  ----                ----                     -------
+  Normal   Scheduled               23m                 default-scheduler        Successfully assigned ghost/ghost-8499d5fb57-ncqqg to cp1.uk.cloudnative.coop
+  Normal   SuccessfulAttachVolume  23m                 attachdetach-controller  AttachVolume.Attach succeeded for volume "pvc-17166eda-0c12-49fe-b264-010dde15a5a3"
+  Warning  FailedMount             37s (x19 over 23m)  kubelet                  MountVolume.MountDevice failed for volume "pvc-17166eda-0c12-49fe-b264-010dde15a5a3" : rpc error: code = Internal desc = mount failed: exit status 32
+Mounting command: /usr/local/sbin/nsmounter
+Mounting arguments: mount -t nfs -o vers=4.1,noresvport,intr,hard 10.98.159.230:/pvc-17166eda-0c12-49fe-b264-010dde15a5a3 /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn.io/fd606d5d5795c1a7eed567e3f011db4aa5f8b475f484e1120cc6af0556f54454/globalmount
+Output: mount: /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn.io/fd606d5d5795c1a7eed567e3f011db4aa5f8b475f484e1120cc6af0556f54454/globalmount: bad option; for several filesystems (e.g. nfs, cifs) you might need a /sbin/mount.<type> helper program.
+#+end_example
+
 * harbor
 https://goharbor.io/docs/1.10/administration/configure-authentication/oidc-auth/
 
