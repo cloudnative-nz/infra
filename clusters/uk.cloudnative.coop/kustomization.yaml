@@ -13,6 +13,7 @@ resources:
   - authentik.yaml
   - harbor.yaml
   - minio-tenant.yaml
+  - ghost.yaml
   # - reflector.yaml
   # - external-dns.yaml
   # - capi.yaml
