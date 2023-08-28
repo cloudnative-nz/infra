@@ -4,16 +4,16 @@ resources:
   - secrets.yaml
   - nginx.yaml
   - cert-manager.yaml
-  - gitops.yaml
-  - longhorn.yaml
-  - coder.yaml
-  - vcluster.yaml
-  - minio-operator.yaml
+  # - gitops.yaml
+  # - longhorn.yaml
+  # - coder.yaml
+  # - vcluster.yaml
+  # - minio-operator.yaml
   # - powerdns.yaml
-  - authentik.yaml
+  # - authentik.yaml
   # - harbor.yaml
-  - minio-tenant.yaml
-  - ghost.yaml
+  # - minio-tenant.yaml
+  # - ghost.yaml
   # - reflector.yaml
   # - external-dns.yaml
   # - capi.yaml
