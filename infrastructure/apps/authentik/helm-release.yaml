@@ -73,11 +73,14 @@ spec:
     ingress:
       ingressClassName: "nginx"
       enabled: true
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-http01"
       tls:
-        - hosts:
-            - sso.uk.cloudnative.coop
+        - secretName: authentik-tls
+          hosts:
+            - ${AUTHENTIK_INGRESS_HOST:=auth.company.com}
       hosts:
-        - host: sso.uk.cloudnative.coop
+        - host: ${AUTHENTIK_INGRESS_HOST:=auth.company.com}
           paths:
             - path: "/"
               pathType: Prefix

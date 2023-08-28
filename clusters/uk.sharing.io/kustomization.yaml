@@ -6,11 +6,11 @@ resources:
   - cert-manager.yaml
   - gitops.yaml
   - longhorn.yaml
+  - authentik.yaml
   # - coder.yaml
   # - vcluster.yaml
   # - minio-operator.yaml
   # - powerdns.yaml
-  # - authentik.yaml
   # - harbor.yaml
   # - minio-tenant.yaml
   # - ghost.yaml

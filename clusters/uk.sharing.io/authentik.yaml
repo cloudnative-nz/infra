@@ -13,4 +13,4 @@ spec:
     name: flux-system
   postBuild:
     substitute:
-      AUTHENTIK_INGRESS_HOST: auth.uk.cloudnative.coop
+      AUTHENTIK_INGRESS_HOST: auth.uk.sharing.io
