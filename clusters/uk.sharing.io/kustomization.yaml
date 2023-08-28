@@ -5,7 +5,7 @@ resources:
   - nginx.yaml # EXTERNAL_IP
   - cert-manager.yaml
   - gitops.yaml
-  # - longhorn.yaml
+  - longhorn.yaml
   # - coder.yaml
   # - vcluster.yaml
   # - minio-operator.yaml
