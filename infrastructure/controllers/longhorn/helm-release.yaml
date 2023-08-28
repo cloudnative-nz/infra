@@ -35,7 +35,8 @@ spec:
       defaultMkfsParams: ""
       defaultClassReplicaCount: 1 # We only have one node
       defaultDataLocality: disabled # best-effort otherwise
-      reclaimPolicy: "Delete"
+      reclaimPolicy: "Retain"
+      # reclaimPolicy: "Delete"
       migrateable: false # What is this?
     ingress:
       enabled: true
