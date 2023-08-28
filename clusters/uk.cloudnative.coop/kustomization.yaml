@@ -9,9 +9,9 @@ resources:
   - coder.yaml
   - vcluster.yaml
   - minio-operator.yaml
-  - powerdns.yaml
+  # - powerdns.yaml
   - authentik.yaml
-  - harbor.yaml
+  # - harbor.yaml
   - minio-tenant.yaml
   - ghost.yaml
   # - reflector.yaml
