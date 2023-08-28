@@ -4,7 +4,7 @@ resources:
   - secrets.yaml
   - nginx.yaml # EXTERNAL_IP
   - cert-manager.yaml
-  # - gitops.yaml
+  - gitops.yaml
   # - longhorn.yaml
   # - coder.yaml
   # - vcluster.yaml
