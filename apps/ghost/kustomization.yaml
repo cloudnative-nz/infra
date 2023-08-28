@@ -6,7 +6,7 @@ resources:
   # - passwords.yaml
   # Manually copied over the cert for now, we have two months to get
   # a cert issuer to re-issue
-  - cert.yaml
+  # - cert.yaml
   - ingress.yaml
   - service-accounts.yaml
   - configmap.yaml

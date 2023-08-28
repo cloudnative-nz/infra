@@ -32,6 +32,7 @@ spec:
     # existingSecretAdminPassword: harbor
     # The name of the key in the secret where to find harbor admin password Harbor
     # existingSecretAdminPasswordKey: HARBOR_ADMIN_PASSWORD
+    harborAdminPassword: Harbor12345
     tls:
       enable: true
       certSource: none

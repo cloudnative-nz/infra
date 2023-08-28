@@ -86,9 +86,9 @@ spec:
             - name: PDNS_SITE_NAME
               value: powerdns.uk.cloudnative.coop Administration
             - name: PDNS_URL
-              value: http://auth:8081
+              value: http://auth-web:8081
             - name: PDNS_VERSION
-              value: 4.7.3
+              value: 4.8.1
             - name: PDNS_ZONES
               value: |-
                 uk.cloudnative.coop
