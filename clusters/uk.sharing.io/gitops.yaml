@@ -1,0 +1,35 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: flux-receiver
+  namespace: flux-system
+spec:
+  interval: 5m
+  path: "./infrastructure/configs/flux-receiver"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  postBuild:
+    substitute:
+      FLUX_RECEIVER_HOST: flux-webhook.uk.cloudnative.coop
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: gitops
+  namespace: flux-system
+spec:
+  interval: 5m
+  path: "./apps/gitops"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  postBuild:
+    substitute:
+      GITOPS_INGRESS_HOST: gitops.uk.cloudnative.coop
+      GITOPS_USERNAME: admin
+      # echo "$GITOPS_PASSWORD" | gitops get bcrypt-hash
+      GITOPS_PASSWORDHASH: "$2a$10$TWhfTylCxtmd/KwMrPVT/OyfQMFKjruUzios2.SRf6C9/nSRSg.kW"
