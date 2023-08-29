@@ -133,7 +133,7 @@ spec:
         #   https://coder.com/docs/v2/latest/admin/auth#role-sync-enterprise
         - name: CODER_OIDC_ROLE_FIELD
           value: "groups"
-        - name: CODER_OIDC_GROUP_MAPPING
+        - name: CODER_OIDC_ROLE_MAPPING
           value: >
             {
               "authentik Admins": [ "Owner", "User Admin", "Template Admin", "Auditor" ]
