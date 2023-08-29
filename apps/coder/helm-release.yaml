@@ -132,6 +132,7 @@ spec:
         #   value: email
         # - name: CODER_OIDC_IGNORE_EMAIL_VERIFIED
         #   value: "true"
+        #  https://coder.com/docs/v2/latest/admin/auth#group-sync-enterprise
         - name: CODER_OIDC_GROUP_FIELD
           value: "groups"
         - name: CODER_OIDC_GROUP_MAPPING
@@ -141,9 +142,8 @@ spec:
             }
         - name: CODER_OIDC_GROUP_AUTO_CREATE
           value: "true"
-        # - name: CODER_OIDC_GROUP_REGEX_FILTER
-        #   value: "^Coder.*$"
-        #   https://coder.com/docs/v2/latest/admin/auth#group-sync-enterprise
+        - name: CODER_OIDC_GROUP_REGEX_FILTER
+          value: "^Coder.*$"
         - name: CODER_OIDC_SCOPES
           value: openid,profile,email,groups
         - name: CODER_OIDC_CLIENT_ID
@@ -166,7 +166,7 @@ spec:
         - name: CODER_OIDC_ROLE_MAPPING
           value: |
             {
-              "authentik Admins": [ "Owner", "User Admin", "Template Admin", "Auditor" ]
+              "authentik Admins": "Owner"
             }
         # - name: CODER_DISABLE_PASSWORD_AUTH
         #   value: "true"
