@@ -7,7 +7,7 @@ resources:
   - gitops.yaml
   - longhorn.yaml
   - authentik.yaml
-  # - coder.yaml
+  - coder.yaml
   # - vcluster.yaml
   # - minio-operator.yaml
   # - powerdns.yaml
