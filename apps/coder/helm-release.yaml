@@ -24,8 +24,23 @@ spec:
         type: ClusterIP
         externalTrafficPolicy: Local
       env:
+        - name: CODER_SSH_KEYGEN_ALGORITHM
+          value: "ed25519"
         - name: CODER_PROVISIONER_DAEMONS
           value: "50"
+        - name: CODER_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: coder
+              key: CODER_USERNAME
+        - name: CODER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: coder
+              key: CODER_PASSWORD
+        # used by /opt/coder server create-admin-user
+        - name: CODER_EMAIL
+          value: "coder@${CODER_WILDCARD_DOMAIN:=example.com}"
         - name: CODER_PG_CONNECTION_URL
           valueFrom:
             secretKeyRef:
