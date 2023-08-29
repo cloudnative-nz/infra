@@ -122,6 +122,8 @@ spec:
           value: "Sign in with auth.${CODER_WILDCARD_DOMAIN:=example.com}"
         - name: CODER_OIDC_ISSUER_URL
           value: "https://auth.${CODER_WILDCARD_DOMAIN:=example.com}/application/o/coder/"
+        - name: CODER_OIDC_ICON_URL
+          value: "https://goauthentik.io/img/icon.png"
         # - name: CODER_OIDC_USERNAME_FIELD
         #   value: preferred_username
         # - name: CODER_OIDC_EMAIL_DOMAIN
@@ -130,18 +132,10 @@ spec:
         #   value: email
         # - name: CODER_OIDC_IGNORE_EMAIL_VERIFIED
         #   value: "true"
-        #   https://coder.com/docs/v2/latest/admin/auth#role-sync-enterprise
-        - name: CODER_OIDC_ROLE_FIELD
-          value: "groups"
-        - name: CODER_OIDC_ROLE_MAPPING
-          value: >
-            {
-              "authentik Admins": [ "Owner", "User Admin", "Template Admin", "Auditor" ]
-            }
         - name: CODER_OIDC_GROUP_FIELD
           value: "groups"
         - name: CODER_OIDC_GROUP_MAPPING
-          value: >
+          value: |
             {
               "authentik Admins": "Coder Admins"
             }
@@ -166,15 +160,19 @@ spec:
         #   value: "debug"
         - name: CODER_VERBOSE
           value: "true"
+        #   https://coder.com/docs/v2/latest/admin/auth#role-sync-enterprise
+        - name: CODER_OIDC_ROLE_FIELD
+          value: "groups"
+        - name: CODER_OIDC_ROLE_MAPPING
+          value: |
+            {
+              "authentik Admins": [ "Owner", "User Admin", "Template Admin", "Auditor" ]
+            }
         # - name: CODER_DISABLE_PASSWORD_AUTH
         #   value: "true"
         # - name: TF_VAR_metal_project
         #   value: "82b5c425-8dd4-429e-ae0d-d32f265c63e4"
         # https://coder.com/docs/v2/latest/admin/git-providers#multiple-git-providers-enterprise
-        # - name: CODER_OIDC_SIGN_IN_TEXT
-        #   value: "Sign in with Gitea"
-        # - name: CODER_OIDC_IGNORE_EMAIL_VERIFIED
-        #   value: "true"
         # - name: CODER_OIDC_ICON_URL
         #   value: "https://gitea.io/images/gitea.png"
         # - name: CODER_OIDC_SCOPES
