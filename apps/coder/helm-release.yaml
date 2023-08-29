@@ -130,6 +130,14 @@ spec:
         #   value: email
         # - name: CODER_OIDC_IGNORE_EMAIL_VERIFIED
         #   value: "true"
+        #   https://coder.com/docs/v2/latest/admin/auth#role-sync-enterprise
+        - name: CODER_OIDC_ROLE_FIELD
+          value: "groups"
+        - name: CODER_OIDC_GROUP_MAPPING
+          value: >
+            {
+              "authentik Admins": [ "Owner", "User Admin", "Template Admin", "Auditor" ]
+            }
         - name: CODER_OIDC_GROUP_FIELD
           value: "groups"
         - name: CODER_OIDC_GROUP_MAPPING
