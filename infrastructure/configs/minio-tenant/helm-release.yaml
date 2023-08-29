@@ -45,9 +45,9 @@ spec:
         - name: MINIO_IDENTITY_OPENID_SCOPES
           value: "openid,profile,email,minio"
         - name: MINIO_IDENTITY_OPENID_DISPLAY_NAME
-          value: "Hello from DISPLAY_NAME"
-        - name: MINIO_IDENTITY_OPENID_COMMENT
-          value: "Hello from ii!"
+          value: "Login with auth.${MINIO_DOMAIN:=examples.com}"
+        # - name: MINIO_IDENTITY_OPENID_COMMENT
+        #   value: "Hello from ii!"
         # - name: MINIO_IDENTITY_OPENID_REDIRECT_URI
         #   value: ""
         # - name: MINIO_IDENTITY_OPENID_CLAIM_NAME
