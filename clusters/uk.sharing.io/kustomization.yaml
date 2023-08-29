@@ -9,11 +9,11 @@ resources:
   - longhorn.yaml
   - authentik.yaml
   - coder.yaml
+  - minio-operator.yaml
+  - minio-tenant.yaml
   # - vcluster.yaml
-  # - minio-operator.yaml
   # - powerdns.yaml
   # - harbor.yaml
-  # - minio-tenant.yaml
   # - ghost.yaml
   # - reflector.yaml
   # - external-dns.yaml

@@ -41,7 +41,7 @@ spec:
       env:
         # https://goauthentik.io/integrations/services/minio/#minio
         - name: MINIO_IDENTITY_OPENID_CONFIG_URL
-          value: "https://sso.uk.cloudnative.coop/application/o/minio/.well-known/openid-configuration"
+          value: "https://auth.${MINIO_DOMAIN:=examples.com}/application/o/minio/.well-known/openid-configuration"
         - name: MINIO_IDENTITY_OPENID_SCOPES
           value: "openid,profile,email,minio"
         - name: MINIO_IDENTITY_OPENID_COMMENT
@@ -68,7 +68,7 @@ spec:
         bucketDNS: true
         domains:
           minio:
-            - https://s3.uk.cloudnative.coop
+            - https://s3.${MINIO_DOMAIN:=examples.com}
       pools:
         - name: pool-0
           size: 20Gi
@@ -86,7 +86,7 @@ spec:
             runAsNonRoot: true
     ingress:
       api:
-        host: s3.uk.cloudnative.coop
+        host: "s3.${MINIO_DOMAIN:=examples.com}"
         enabled: true
         ingressClassName: "nginx"
         labels: {}
@@ -102,11 +102,11 @@ spec:
         tls:
           - secretName: tls-minio-external
             hosts:
-              - s3.uk.cloudnative.coop
-              - "*.s3.uk.cloudnative.coop"
+              - "s3.${MINIO_DOMAIN:=examples.com}"
+              - "*.s3.${MINIO_DOMAIN:=examples.com}"
       console:
         enabled: true
-        host: minio.uk.cloudnative.coop
+        host: "minio.${MINIO_DOMAIN:=examples.com}"
         ingressClassName: "nginx"
         labels: {}
         # When we get back to using TLS, we might need this
@@ -120,7 +120,7 @@ spec:
         tls:
           - secretName: tls-minio-external
             hosts:
-              - minio.uk.cloudnative.coop
+              - "minio.${MINIO_DOMAIN:=examples.com}"
     # extraResources:
     #   - |
     #     apiVersion: v1

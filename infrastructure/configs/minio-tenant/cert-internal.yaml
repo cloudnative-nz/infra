@@ -20,10 +20,10 @@ spec:
   secretName: tls-minio
   dnsNames:
     # Ingress domains
-    - minio.cloudnative.nz
-    - "*.minio.cloudnative.nz"
-    - s3.cloudnative.nz
-    - "*.s3.cloudnative.nz"
+    - "minio.${MINIO_DOMAIN:=examples.com}"
+    - "*.minio.${MINIO_DOMAIN:=examples.com}"
+    - "s3.${MINIO_DOMAIN:=examples.com}"
+    - "*.s3.${MINIO_DOMAIN:=examples.com}"
     # Internal domain
     - minio-hl-svc
     - minio-pool-0-0.mini-hl.minio
