@@ -27,4 +27,4 @@ spec:
       interval: 12h
   # https://github.com/zachomedia/cert-manager-webhook-pdns/blob/main/deploy/cert-manager-webhook-pdns/values.yaml
   values:
-    groupName: ${DOMAIN:=ii.nz}
+    groupName: ${ALLOWED_ZONE:=ii.nz}
