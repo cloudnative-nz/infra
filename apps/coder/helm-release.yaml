@@ -166,7 +166,7 @@ spec:
         - name: CODER_OIDC_ROLE_MAPPING
           value: |
             {
-              "authentik Admins": "Owner"
+              "authentik Admins": [ "owner", "template-admin", "user-admin", "auditor" ]
             }
         # - name: CODER_DISABLE_PASSWORD_AUTH
         #   value: "true"
