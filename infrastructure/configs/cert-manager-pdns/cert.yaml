@@ -7,8 +7,8 @@ metadata:
 spec:
   secretName: wildcard-tls
   dnsNames:
-    - "*.${DOMAIN:=ii.nz}"
-    - "${DOMAIN:=ii.nz}"
+    - "*.${WILDCARD_DOMAIN:=ii.nz}"
+    - "${WILDCARD_DOMAIN:=ii.nz}"
   issuerRef:
     name: letsencrypt-pdns
     kind: ClusterIssuer

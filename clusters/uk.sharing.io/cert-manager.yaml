@@ -41,5 +41,6 @@ spec:
   postBuild:
     substitute:
       ACME_EMAIL: uk@sharing.io
-      DOMAIN: sharing.io
+      WILDCARD_DOMAIN: uk.sharing.io
+      ALLOWED_ZONE: sharing.io
       # DOMAIN: uk.sharing.io

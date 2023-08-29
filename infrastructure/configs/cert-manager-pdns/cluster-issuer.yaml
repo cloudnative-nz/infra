@@ -47,13 +47,13 @@ spec:
     solvers:
       # - selector:
       #     dnsNames:
-      #       - "*.${DOMAIN:=ii.nz}"
-      #       - "${DOMAIN:=ii.nz}"
+      #       - "*.${ALLOWED_ZONE:=ii.nz}"
+      #       - "${ALLOWED_ZONE:=ii.nz}"
       # https://cert-manager.io/docs/configuration/acme/dns01/
       - dns01:
           webhook:
             # This group needs to be configured when installing the helm package, otherwise the webhook won't have permission to create an ACME challenge for this API group.
-            groupName: ${DOMAIN:=ii.nz}
+            groupName: ${ALLOWED_ZONE:=ii.nz}
             solverName: pdns
             config:
               # zone: example.com # (Optional): When not provided the Zone will obtained by cert-manager's ResolvedZone
@@ -63,8 +63,8 @@ spec:
               headers:
                 hello: "there"
               allowed-zones:
-                - ${DOMAIN:=ii.nz}.
-                - ${DOMAIN:=ii.nz}
+                - ${ALLOWED_ZONE:=ii.nz}.
+                - ${ALLOWED_ZONE:=ii.nz}
               apiKeySecretRef:
                 name: pdns
                 key: api-key
@@ -89,12 +89,12 @@ spec:
     solvers:
       # - selector:
       #     dnsNames:
-      #       - "*.${DOMAIN:=ii.nz}"
-      #       - "${DOMAIN:=ii.nz}"
+      #       - "*.${ALLOWED_ZONE:=ii.nz}"
+      #       - "${ALLOWED_ZONE:=ii.nz}"
       - dns01:
           webhook:
             # This group needs to be configured when installing the helm package, otherwise the webhook won't have permission to create an ACME challenge for this API group.
-            groupName: ${DOMAIN:=ii.nz}
+            groupName: ${ALLOWED_ZONE:=ii.nz}
             solverName: pdns
             # https://github.com/zachomedia/cert-manager-webhook-pdns/blob/main/main.go#L76
             config:
@@ -105,8 +105,8 @@ spec:
               headers:
                 hello: "there"
               allowed-zones:
-                - ${DOMAIN:=ii.nz}.
-                - ${DOMAIN:=ii.nz}
+                - ${ALLOWED_ZONE:=ii.nz}.
+                - ${ALLOWED_ZONE:=ii.nz}
               apiKeySecretRef:
                 name: pdns
                 key: api-key
