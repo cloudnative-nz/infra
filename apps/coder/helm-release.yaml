@@ -65,22 +65,22 @@ spec:
         #       name: coder
         #       key: CODER_OAUTH2_GITHUB_CLIENT_SECRET
         # CODER_GITAUTH
-        # - name: CODER_GITAUTH_0_ID
-        #   value: "github"
-        # - name: CODER_GITAUTH_0_TYPE
-        #   value: "github"
-        # - name: CODER_GITAUTH_0_SCOPES
-        #   value: "repo" # write:gpg_key"
-        # - name: CODER_GITAUTH_0_CLIENT_ID
-        #   valueFrom:
-        #     secretKeyRef:
-        #       name: coder
-        #       key: CODER_GITAUTH_0_CLIENT_ID
-        # - name: CODER_GITAUTH_0_CLIENT_SECRET
-        #   valueFrom:
-        #     secretKeyRef:
-        #       name: coder
-        #       key: CODER_GITAUTH_0_CLIENT_SECRET
+        - name: CODER_GITAUTH_0_ID
+          value: "github"
+        - name: CODER_GITAUTH_0_TYPE
+          value: "github"
+        - name: CODER_GITAUTH_0_SCOPES
+          value: "repo" # write:gpg_key"
+        - name: CODER_GITAUTH_0_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: coder
+              key: CODER_GITAUTH_0_CLIENT_ID
+        - name: CODER_GITAUTH_0_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: coder
+              key: CODER_GITAUTH_0_CLIENT_SECRET
         # For provisioning within our Packet Project
         - name: METAL_AUTH_TOKEN
           valueFrom:
@@ -106,7 +106,7 @@ spec:
         - name: CODER_OIDC_SIGN_IN_TEXT
           value: "Sign in with auth.${CODER_WILDCARD_DOMAIN:=example.com}"
         - name: CODER_OIDC_ISSUER_URL
-          value: "https://auth.${CODER_WILDCARD_DOMAIN:=example.com}"
+          value: "https://auth.${CODER_WILDCARD_DOMAIN:=example.com}/application/o/coder/"
         # - name: CODER_OIDC_USERNAME_FIELD
         #   value: preferred_username
         # - name: CODER_OIDC_EMAIL_DOMAIN
