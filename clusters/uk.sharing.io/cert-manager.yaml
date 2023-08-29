@@ -41,4 +41,5 @@ spec:
   postBuild:
     substitute:
       ACME_EMAIL: uk@sharing.io
-      DOMAIN: uk.sharing.io
+      DOMAIN: sharing.io
+      # DOMAIN: uk.sharing.io
