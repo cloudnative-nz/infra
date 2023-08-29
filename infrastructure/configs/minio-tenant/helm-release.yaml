@@ -44,6 +44,8 @@ spec:
           value: "https://auth.${MINIO_DOMAIN:=examples.com}/application/o/minio/.well-known/openid-configuration"
         - name: MINIO_IDENTITY_OPENID_SCOPES
           value: "openid,profile,email,minio"
+        - name: MINIO_IDENTITY_OPENID_DISPLAY_NAME
+          value: "Hello from DISPLAY_NAME"
         - name: MINIO_IDENTITY_OPENID_COMMENT
           value: "Hello from ii!"
         # - name: MINIO_IDENTITY_OPENID_REDIRECT_URI
