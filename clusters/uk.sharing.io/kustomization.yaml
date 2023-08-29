@@ -3,7 +3,8 @@ kind: Kustomization
 resources:
   - secrets.yaml
   - nginx.yaml # EXTERNAL_IP
-  # - cert-manager.yaml
+  - cert-manager.yaml
+  # - cert-manager-pdns.yaml
   - gitops.yaml
   - longhorn.yaml
   - authentik.yaml

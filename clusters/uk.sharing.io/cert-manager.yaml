@@ -23,24 +23,3 @@ spec:
       DNS01_RECURSIVE_NAMESERVERS_ONLY: "true"
       DNS01_RECURSIVE_NAMESERVERS: 8.8.8.8:53
       # DNS01_RECURSIVE_NAMESERVERS: 123.253.176.253:53
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: certificates-pdns
-  namespace: flux-system
-spec:
-  dependsOn:
-    - name: cert-manager
-  interval: 5m
-  path: "./infrastructure/configs/cert-manager-pdns"
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  postBuild:
-    substitute:
-      ACME_EMAIL: uk@sharing.io
-      WILDCARD_DOMAIN: uk.sharing.io
-      ALLOWED_ZONE: sharing.io
-      # DOMAIN: uk.sharing.io
