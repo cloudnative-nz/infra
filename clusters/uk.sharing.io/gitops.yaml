@@ -29,6 +29,7 @@ spec:
     name: flux-system
   postBuild:
     substitute:
+      OIDC_BUTTON_LABEL: auth.uk.sharing.io
       GITOPS_INGRESS_HOST: gitops.uk.sharing.io
       GITOPS_USERNAME: admin
       # echo "$GITOPS_PASSWORD" | gitops get bcrypt-hash

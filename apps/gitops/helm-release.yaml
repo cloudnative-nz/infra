@@ -25,7 +25,7 @@ spec:
   values:
     envVars:
       - name: WEAVE_GITOPS_FEATURE_OIDC_BUTTON_LABEL
-        value: "Login with Authentik"
+        value: "${OIDC_BUTTON_LABEL:=auth.company.com}"
     adminUser:
       create: true
       username: ${GITOPS_USERNAME:=admin}
