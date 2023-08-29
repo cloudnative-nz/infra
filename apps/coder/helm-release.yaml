@@ -104,9 +104,9 @@ spec:
         #       key: CODER_OIDC_CLIENT_SECRET
         # authentik as OIDC
         - name: CODER_OIDC_SIGN_IN_TEXT
-          value: "Sign in with sso.uk.cloudnative.coop"
+          value: "Sign in with auth.${CODER_WILDCARD_DOMAIN:=example.com}"
         - name: CODER_OIDC_ISSUER_URL
-          value: "https://sso.uk.cloudnative.coop/application/o/coder/"
+          value: "https://auth.${CODER_WILDCARD_DOMAIN:=example.com}"
         # - name: CODER_OIDC_USERNAME_FIELD
         #   value: preferred_username
         # - name: CODER_OIDC_EMAIL_DOMAIN
