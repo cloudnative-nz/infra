@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-admin
+  namespace: coder
+spec:
+  # parallelism: 1
+  # completions: 1
+  # backoffLimit: 4
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: create-admin
+          image: ghcr.io/coder/coder:v2.1.4
+          command: ["/opt/coder", "server", "create-admin-user"]
+          env:
+            # used by /opt/coder server create-admin-user
+            - name: CODER_EMAIL
+              value: "coder@${CODER_WILDCARD_DOMAIN:=example.com}"
+            # - name: CODER_EMAIL
+            #   value: "coder@uk.sharing.io"
+            - name: CODER_SSH_KEYGEN_ALGORITHM
+              value: "ed25519"
+            - name: CODER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: coder
+                  key: CODER_USERNAME
+            - name: CODER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: coder
+                  key: CODER_PASSWORD
+            - name: CODER_PG_CONNECTION_URL
+              valueFrom:
+                secretKeyRef:
+                  name: coder
+                  key: CODER_PG_CONNECTION_URL
