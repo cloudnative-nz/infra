@@ -5,8 +5,8 @@ metadata:
   name: certificates-pdns
   namespace: flux-system
 spec:
-  dependsOn:
-    - name: cert-manager
+  # dependsOn:
+  #   - name: cert-manager
   interval: 5m
   path: "./infrastructure/configs/cert-manager-pdns"
   prune: true

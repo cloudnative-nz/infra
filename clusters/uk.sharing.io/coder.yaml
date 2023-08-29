@@ -7,8 +7,8 @@ metadata:
 spec:
   prune: true
   interval: 5m
-  dependsOn:
-    - name: longhorn
+  # dependsOn:
+  #   - name: longhorn
   path: "./apps/coder-db"
   sourceRef:
     kind: GitRepository

@@ -5,8 +5,8 @@ metadata:
   name: cert-manager
   namespace: flux-system
 spec:
-  dependsOn:
-    - name: secrets
+  # dependsOn:
+  #   - name: secrets
   interval: 5m
   path: "./infrastructure/controllers/cert-manager"
   prune: true
