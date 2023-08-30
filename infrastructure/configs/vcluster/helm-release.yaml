@@ -14,7 +14,7 @@ spec:
   chart:
     spec:
       chart: vcluster-k8s
-      version: "0.15.2" # Current as of June 15 2023
+      version: "0.15.7" # Current as of Augest 30 2023
       sourceRef:
         kind: HelmRepository
         name: loft
