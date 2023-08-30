@@ -161,9 +161,9 @@ spec:
         - name: CODER_VERBOSE
           value: "true"
         #   https://coder.com/docs/v2/latest/admin/auth#role-sync-enterprise
-        - name: CODER_OIDC_ROLE_FIELD
+        - name: CODER_OIDC_USER_ROLE_FIELD
           value: "groups"
-        - name: CODER_OIDC_ROLE_MAPPING
+        - name: CODER_OIDC_USER_ROLE_MAPPING
           value: |
             {
               "authentik Admins": [ "owner", "template-admin", "user-admin", "auditor" ]
