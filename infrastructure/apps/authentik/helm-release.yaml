@@ -15,8 +15,9 @@ spec:
   chart:
     spec:
       chart: authentik
-      version: "2023.6.3" # Current as of August 20, 2023
-      # version: "2023.8.1" # Current as of August 30, 2023
+      # version: "2023.6.3" # Current as of August 20, 2023
+      # WARNING: PostgreSQL is updated from 11 to 15 in 2023.8.1
+      version: "2023.8.1" # Current as of August 30, 2023
       sourceRef:
         kind: HelmRepository
         name: authentik
@@ -92,8 +93,8 @@ spec:
       # While in diagnosticMode we can manipulate the data
       # diagnosticMode:
       #   enabled: true
-      image:
-        tag: 15.2.0-debian-11-r26
+      # image:
+      #   tag: 15.2.0-debian-11-r26
       # auth:
       #   existingSecret: authentik-env
       #   secretKeys:
