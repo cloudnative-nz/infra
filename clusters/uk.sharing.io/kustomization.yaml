@@ -11,7 +11,7 @@ resources:
   - coder.yaml
   - minio-operator.yaml
   - minio-tenant.yaml
-  # - vcluster.yaml
+  - vcluster.yaml
   # - powerdns.yaml
   # - harbor.yaml
   # - ghost.yaml
