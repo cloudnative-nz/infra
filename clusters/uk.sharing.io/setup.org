@@ -685,6 +685,36 @@ Capacity:
   pods:               1024
 #+end_example
 
+** increase fswatch
+
+*** temporary fix
+#+begin_src bash
+sysctl fs.inotify.max_user_watches=524288
+sysctl fs.inotify.max_user_instances=512
+#+end_src
+
+*** persistent fix
+To make the changes persistent, edit the file /etc/sysctl.d/99-maxnotify.conf and add these lines:
+#+begin_src toml :tangle (concat tramp-dir "etc/sysctl.d/99-maxnotify.conf") :comments no
+fs.inotify.max_user_watches = 524288
+fs.inotify.max_user_instances = 512
+#+end_src
+You will then need load settings from that file:
+#+begin_src shell
+sysctl --system
+#+end_src
+*** verify
+#+begin_src bash :sync
+sysctl get fs.inotify.max_user_watches
+sysctl get fs.inotify.max_user_instances
+#+end_src
+
+#+RESULTS:
+#+begin_example
+fs.inotify.max_user_watches = 524288
+fs.inotify.max_user_instances = 512
+#+end_example
+
 * Bootstrap Fux + Sops Encryption
 ** generate a github TOKEN
 https://github.com/settings/tokens/new
