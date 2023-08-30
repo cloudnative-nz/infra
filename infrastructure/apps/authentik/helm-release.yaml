@@ -15,7 +15,8 @@ spec:
   chart:
     spec:
       chart: authentik
-      version: "2023.8.1" # Current as of August 30, 2023
+      version: "2023.6.3" # Current as of August 20, 2023
+      # version: "2023.8.1" # Current as of August 30, 2023
       sourceRef:
         kind: HelmRepository
         name: authentik
