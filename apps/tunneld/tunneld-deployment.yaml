@@ -47,12 +47,17 @@ spec:
               value: "X-Forwarded-For"
             - name: TUNNELD_PPROF_LISTEN_ADDRESS
               value: ""
-            - name: TUNNELD_WIREGUARD_KEYFILE
-              value: "keyfile"
-            # Set KEY OR KEY_FILE
             # wg genkey to get a valid private key
-            # - name: TUNNELD_WIREGUARD_KEY
-            #   value: yBtWv6Kkbm7OipW4F784e6y9q63K8P0EeJpasbFgk3s=
+            - name: TUNNELD_WIREGUARD_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: coder
+                  key: TUNNELD_WIREGUARD_KEY
+            # Can't seem to use KEYFILE, just errors out
+            # wireguard-key is required.
+            #   See --help for more information.
+            # - name: TUNNELD_WIREGUARD_KEYFILE
+            #   value: "keyfile"
           image:
             ghcr.io/ii/tunneld:0.1.10-sharing
             # - name: TUNNELD_TRACING_HONEYCOMB_TEAM

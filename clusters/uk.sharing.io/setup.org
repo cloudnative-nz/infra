@@ -1431,6 +1431,7 @@ Mostly we map the env vars directly.
 . .envrc
 kubectl create secret generic coder \
     --namespace=coder \
+    --from-literal=TUNNELD_WIREGUARD_KEY=$TUNNELD_WIREGUARD_KEY \
     --from-literal=PDNS_TSIG_KEY=$PDNS_TSIG_KEY \
     --from-literal=PDNS_API_KEY=$PDNS_API_KEY \
     --from-literal=GITHUB_TOKEN=$GITHUB_TOKEN \
