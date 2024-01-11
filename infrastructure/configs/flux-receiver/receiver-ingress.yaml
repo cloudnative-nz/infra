@@ -4,6 +4,8 @@ kind: Ingress
 metadata:
   name: webhook-receiver
   namespace: flux-system
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-http01"
 spec:
   ingressClassName: nginx
   rules:
@@ -18,5 +20,6 @@ spec:
             path: /
             pathType: Prefix
   tls:
-    - hosts:
+    - secretName: "flux-webhook-tls"
+      hosts:
         - ${FLUX_RECEIVER_HOST:=flux-webhook.example.com}

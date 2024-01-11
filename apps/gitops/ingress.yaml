@@ -4,6 +4,8 @@ kind: Ingress
 metadata:
   name: gitops
   namespace: flux-system
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-http01"
 spec:
   ingressClassName: nginx
   rules:
@@ -18,5 +20,6 @@ spec:
             path: /
             pathType: ImplementationSpecific
   tls:
-    - hosts:
+    - secretName: "gitops-tls"
+      hosts:
         - ${GITOPS_INGRESS_HOST:=gitops.example.com}

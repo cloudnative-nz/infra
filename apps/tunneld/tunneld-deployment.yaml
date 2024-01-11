@@ -1,0 +1,68 @@
+# tunneld-deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tunneld
+  namespace: coder
+  labels:
+    app: tunneld
+    app.kubernetes.io/name: wgtunnel
+    app.kubernetes.io/component: tunneld
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: tunneld
+      app.kubernetes.io/name: wgtunnel
+      app.kubernetes.io/component: tunneld
+  template:
+    metadata:
+      labels:
+        app: tunneld
+        app.kubernetes.io/name: wgtunnel
+        app.kubernetes.io/component: tunneld
+    spec:
+      hostNetwork: true
+      containers:
+        - name: tunneld
+          env:
+            - name: TUNNELD_VERBOSE
+              value: "true"
+            - name: TUNNELD_LISTEN_ADDRESS
+              value: "0.0.0.0:12345"
+            - name: TUNNELD_BASE_URL
+              value: "https://${TUNNEL_WILDCARD_DOMAIN=try.ii.nz}"
+            - name: TUNNELD_WIREGUARD_ENDPOINT
+              value: "${TUNNEL_WILDCARD_DOMAIN=try.ii.nz}:54321"
+            - name: TUNNELD_WIREGUARD_PORT
+              value: "54321"
+            - name: TUNNELD_WIREGUARD_MTU
+              value: "1280"
+            - name: TUNNELD_WIREGUARD_SERVER_IP
+              value: "fcca::1"
+            - name: TUNNELD_WIREGUARD_NETWORK_PREFIX
+              value: "fcca::/16"
+            - name: TUNNELD_REAL_IP_HEADER
+              value: "X-Forwarded-For"
+            - name: TUNNELD_PPROF_LISTEN_ADDRESS
+              value: ""
+            # wg genkey to get a valid private key
+            - name: TUNNELD_WIREGUARD_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: coder
+                  key: TUNNELD_WIREGUARD_KEY
+            # Can't seem to use KEYFILE, just errors out
+            # wireguard-key is required.
+            #   See --help for more information.
+            # - name: TUNNELD_WIREGUARD_KEYFILE
+            #   value: "keyfile"
+          image:
+            ghcr.io/ii/tunneld:0.1.10-sharing
+            # - name: TUNNELD_TRACING_HONEYCOMB_TEAM
+            #   value:
+            # - name: TUNNELD_TRACING_INSTANCE_ID
+            #   value:

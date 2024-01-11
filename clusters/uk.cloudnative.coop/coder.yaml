@@ -1,0 +1,41 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: coder-db
+  namespace: flux-system
+spec:
+  prune: true
+  interval: 5m
+  dependsOn:
+    - name: longhorn
+  path: "./apps/coder-db"
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: StatefulSet
+      name: coder-db-postgresql
+      namespace: coder
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: coder
+  namespace: flux-system
+spec:
+  prune: true
+  interval: 5m
+  # Speed up iteration
+  # dependsOn:
+  #   - name: coder-db
+  path: "./apps/coder"
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  postBuild:
+    substitute:
+      CODER_HOST: space.uk.cloudnative.coop
+      CODER_ACCESS_URL: https://space.uk.cloudnative.coop
+      CODER_WILDCARD_DOMAIN: "uk.cloudnative.coop"

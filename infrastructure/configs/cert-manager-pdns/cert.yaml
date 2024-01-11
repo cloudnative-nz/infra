@@ -7,11 +7,10 @@ metadata:
 spec:
   secretName: wildcard-tls
   dnsNames:
-    - "*.${DOMAIN:=ii.nz}"
-    - "${DOMAIN:=ii.nz}"
+    - "*.${WILDCARD_DOMAIN:=ii.nz}"
+    - "${WILDCARD_DOMAIN:=ii.nz}"
   issuerRef:
-    # name: letsencrypt-staging
-    name: letsencrypt
+    name: letsencrypt-pdns
     kind: ClusterIssuer
     group: cert-manager.io
   secretTemplate:

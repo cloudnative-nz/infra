@@ -1,0 +1,582 @@
+#+title: Wgtunnel
+* src
+** build
+#+begin_src tmate :session ":src"
+git clone https://github.com/coder/wgtunnel
+cd wgtunnel
+make build/tunneld
+#+end_src
+** optionally login to docker registry
+#+begin_src tmux
+# paste a github token here:
+docker login ghcr.io -u hh
+#+end_src
+** build the image
+#+begin_src tmux
+version=0.1.10-sharing
+tag=ghcr.io/ii/tunneld:$version
+docker build --file Dockerfile --build-arg "WGTUNNEL_VERSION=$version" --tag $tag .
+docker push $tag
+#+end_src
+** test running the image
+#+begin_src tmux
+docker run ghcr.io/ii/tunneld:0.1.10-sharing /tunneld -h
+#+end_src
+
+* env settings
+All options can be set via ENV vars, so we do so. See *tunneld -h*
+** --verbose, -v
+Enable verbose logging. (default: false)
+#+begin_src shell :tangle .envrc
+export TUNNELD_VERBOSE=true
+#+end_src
+** --listen-address value, -a value
+HTTP listen address for the API and tunnel traffic. (default: "127.0.0.1:8080")
+#+begin_src shell :tangle .envrc
+export TUNNELD_LISTEN_ADDRESS="0.0.0.0:12345"
+#+end_src
+** --base-url value, -u value
+The base URL to use for the tunnel, including scheme. All tunnels will be subdomains of this hostname.
+#+begin_src shell :tangle .envrc
+export TUNNELD_BASE_URL="https://try.sharing.io:443"
+#+end_src
+** --wireguard-endpoint value, --wg-endpoint value
+The UDP address advertised to clients that they will connect to for wireguard connections. It should be in the form host:port.
+#+begin_src shell :tangle .envrc
+export TUNNELD_WIREGUARD_ENDPOINT="try.sharing.io:54321"
+#+end_src
+** --wireguard-port value, --wg-port value
+The UDP port that the wireguard server will listen on. It should be the same as the port in wireguard-endpoint. (default: 0)
+#+begin_src shell :tangle .envrc
+export TUNNELD_WIREGUARD_PORT=54321
+#+end_src
+** --wireguard-key wg genkey, --wg-key wg genkey
+The private key for the wireguard server. It should be base64 encoded. You can generate a key with wg genkey. Mutually exclusive with wireguard-key-file.
+#+begin_src shell :tangle .envrc
+export TUNNELD_WIREGUARD_KEY=`wg genkey`
+#+end_src
+** --wireguard-key-file value, --wg-key-file value
+The file path containing the private key for the wireguard server. The contents should be base64 encoded. If the file does not exist, a key will be generated for you and written to the file. Mutually exclusive with wireguard-key.
+#+begin_src shell :tangle .envrc
+export TUNNELD_WIREGUARD_KEYFILE=
+#+end_src
+** --wireguard-mtu value, --wg-mtu value
+The MTU to use for the wireguard interface. (default: 1280)
+#+begin_src shell :tangle .envrc
+export TUNNELD_WIREGUARD_MTU=1280
+#+end_src
+** --wireguard-server-ip value, --wg-server-ip value
+The virtual IP address of this server in the wireguard network. Must be an IPv6 address contained within wireguard-network-prefix. (default: "fcca::1")
+#+begin_src shell :tangle .envrc
+export TUNNELD_WIREGUARD_SERVER_IP=fcca::1
+#+end_src
+** --wireguard-network-prefix value, --wg-network-prefix value
+The CIDR of the wireguard network. All client IPs will be generated within this network. Must be a IPv6 CIDR and have at least 64 bits available. (default: "fcca::/16")
+#+begin_src shell :tangle .envrc
+export TUNNELD_WIREGUARD_NETWORK_PREFIX=fcca::/16
+#+end_src
+** --real-ip-header value
+Use the given header as the real IP address rather than the remote socket address.
+#+begin_src shell :tangle .envrc
+export TUNNELD_REAL_IP_HEADER: "X-Forwarded-For"
+#+end_src
+** --pprof-listen-address value
+The address to listen on for pprof. If set to an empty string, pprof will not be enabled. (default: "127.0.0.1:6060")
+#+begin_src shell :tangle .envrc
+# export TUNNELD_PPROF_LISTEN_ADDRESS=0.0.0.0:6060
+export TUNNELD_PPROF_LISTEN_ADDRESS=
+#+end_src
+** --tracing-honeycomb-team value
+The Honeycomb team ID to send tracing data to. If not specified, tracing will not be shipped anywhere.
+#+begin_src shell :tangle .envrc
+export  TUNNELD_TRACING_HONEYCOMB_TEAM=
+#+end_src
+** --tracing-instance-id value
+The instance ID to annotate all traces with that uniquely identifies this deployment. [$TUNNELD_TRACING_INSTANCE_ID]
+#+begin_src shell :tangle .envrc
+export  TUNNELD_TRACING_INSTANCE_ID=
+#+end_src
+* run
+#+begin_src shell
+./wgtunnel/build/tunneld
+#+end_src
+* verify (without kubernetes)
+** listening on ip sockets
+#+begin_src shell
+lsof -i -n -P | grep tunneld
+#+end_src
+
+#+RESULTS:
+#+begin_example
+tunneld   3757815   ii    3u  IPv4  477030064      0t0  UDP *:54321
+tunneld   3757815   ii    7u  IPv6  477030065      0t0  UDP *:54321
+tunneld   3757815   ii   11u  IPv6  477020952      0t0  TCP *:12345 (LISTEN)
+#+end_example
+
+** api
+
+#+begin_src shell
+curl -X POST http://localhost:12345/api/v2/clients
+#+end_src
+
+#+RESULTS:
+#+begin_example
+{"message":"Not found."}
+#+end_example
+* verify with k8s svc+cert+ingress
+** top level
+#+begin_src shell
+curl https://try.sharing.io
+#+end_src
+
+#+RESULTS:
+#+begin_example
+https://coder.com
+#+end_example
+** api
+
+#+begin_src shell
+curl -X POST https://try.sharing.io/api/v2/clients
+#+end_src
+
+#+RESULTS:
+#+begin_example
+{"message":"Request body must be valid JSON.","detail":"EOF"}
+#+end_example
+
+* tunneld deployment
+** tunneld-deployment.yaml
+#+begin_src yaml :tangle tunneld-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tunneld
+  namespace: coder
+  labels:
+    app: tunneld
+    app.kubernetes.io/name: wgtunnel
+    app.kubernetes.io/component: tunneld
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tunneld
+      app.kubernetes.io/name: wgtunnel
+      app.kubernetes.io/component: tunneld
+  template:
+    metadata:
+      labels:
+        app: tunneld
+        app.kubernetes.io/name: wgtunnel
+        app.kubernetes.io/component: tunneld
+    spec:
+      hostNetwork: true
+      containers:
+        - name: tunneld
+          env:
+            - name: TUNNELD_VERBOSE
+              value: "true"
+            - name: TUNNELD_LISTEN_ADDRESS
+              value: "0.0.0.0:12345"
+            - name: TUNNELD_BASE_URL
+              value: "https://try.sharing.io"
+            - name: TUNNELD_WIREGUARD_ENDPOINT
+              value: "try.sharing.io:54321"
+            - name: TUNNELD_WIREGUARD_PORT
+              value: "54321"
+            - name: TUNNELD_WIREGUARD_MTU
+              value: "1280"
+            - name: TUNNELD_WIREGUARD_SERVER_IP
+              value: "fcca::1"
+            - name: TUNNELD_WIREGUARD_NETWORK_PREFIX
+              value: "fcca::/16"
+            - name: TUNNELD_REAL_IP_HEADER
+              value: "X-Forwarded-For"
+            - name: TUNNELD_PPROF_LISTEN_ADDRESS
+              value: ""
+            # - name: TUNNELD_WIREGUARD_KEYFILE
+            #   value: "/tmp/keyfile"
+            # Set KEY OR KEY_FILE
+            # wg genkey to get a valid private key
+            - name: TUNNELD_WIREGUARD_KEY
+              value: yBtWv6Kkbm7OipW4F784e6y9q63K8P0EeJpasbFgk3s=
+          image: ghcr.io/ii/tunneld:0.1.10-sharing
+            # - name: TUNNELD_TRACING_HONEYCOMB_TEAM
+            #   value:
+            # - name: TUNNELD_TRACING_INSTANCE_ID
+            #   value:
+#+end_src
+** kubectl apply
+#+begin_src shell
+kubectl apply -f tunneld-deployment.yaml
+#+end_src
+
+#+RESULTS:
+#+begin_example
+deployment.apps/tunneld configured
+#+end_example
+** kubectl describe
+
+#+begin_src shell
+kubectl describe svc tunneld-wg
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Name:              tunneld-wg
+Namespace:         hh
+Labels:            <none>
+Annotations:       <none>
+Selector:          spaceapp=iipod,spacename=london
+Type:              ClusterIP
+IP Family Policy:  SingleStack
+IP Families:       IPv4
+IP:                10.109.106.31
+IPs:               10.109.106.31
+Port:              wg  54321/UDP
+TargetPort:        54321/UDP
+Endpoints:         10.0.0.145:54321
+Session Affinity:  None
+Events:            <none>
+#+end_example
+
+** kubectl logs
+
+#+begin_src shell
+kubectl logs -n coder deployment/tunneld
+#+end_src
+
+#+RESULTS:
+#+begin_example
+2023-09-01 22:00:02.112 [INFO]	<main.go:247>	parsed private key	{"hash": "2986dc826aa49ad386d8e5897c4aeec23c6db3390675bfa3cb20d640e387fab3b9b7dc69e21c17780b3f01742f7491247d833c1340035cba35d9711f07818e22"}
+2023-09-01 22:00:02.115 [INFO]	<main.go:298>	listening for requests	{"listen_address": "0.0.0.0:12345"}
+#+end_example
+
+* tunneld wireguard service
+** tunneld-wg-svc.yaml
+#+begin_src yaml :tangle tunneld-wg-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: tunneld-wg
+  namespace: coder
+spec:
+  type: ClusterIP
+  internalTrafficPolicy: Cluster
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 54321
+    protocol: UDP
+    name: wg
+    targetPort: 54321
+  selector:
+    app: tunneld
+#+end_src
+** kubectl apply
+#+begin_src shell
+kubectl apply -f tunneld-wg-svc.yaml
+#+end_src
+
+#+RESULTS:
+#+begin_example
+service/tunneld-wg created
+#+end_example
+** kubectl describe
+
+#+begin_src shell
+kubectl describe svc tunneld-wg
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Name:              tunneld-wg
+Namespace:         hh
+Labels:            <none>
+Annotations:       <none>
+Selector:          app=tunneld
+Type:              ClusterIP
+IP Family Policy:  SingleStack
+IP Families:       IPv4
+IP:                10.108.123.154
+IPs:               10.108.123.154
+Port:              wg  54321/UDP
+TargetPort:        54321/UDP
+Endpoints:         <none>
+Session Affinity:  None
+Events:            <none>
+#+end_example
+
+* tunneld api service
+** tunneld-api-svc.yaml
+#+begin_src yaml :tangle tunneld-api-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: tunneld-api
+  namespace: coder
+spec:
+  type: ClusterIP
+  internalTrafficPolicy: Cluster
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 80
+    name: http
+    protocol: TCP
+    targetPort: 12345
+  selector:
+    app: tunneld
+#+end_src
+** kubectl apply
+#+begin_src shell
+kubectl apply -f tunneld-api-svc.yaml
+#+end_src
+
+#+RESULTS:
+#+begin_example
+service/tunneld-api created
+#+end_example
+** kubectl describe
+
+#+begin_src shell
+kubectl -n coder describe svc tunneld-api
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Name:              tunneld-api
+Namespace:         coder
+Labels:            <none>
+Annotations:       <none>
+Selector:          app=tunneld
+Type:              ClusterIP
+IP Family Policy:  SingleStack
+IP Families:       IPv4
+IP:                10.106.193.181
+IPs:               10.106.193.181
+Port:              http  80/TCP
+TargetPort:        12345/TCP
+Endpoints:         10.0.0.99:12345
+Session Affinity:  None
+Events:            <none>
+#+end_example
+
+* wildcard cert
+** certificate resource yaml
+#+begin_src yaml :tangle cert.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: try
+  namespace: coder
+spec:
+  issuerRef:
+    name: letsencrypt-pdns
+    group: cert-manager.io
+    kind: ClusterIssuer
+  commonName: "*.try.sharing.io"
+  secretName: try-tls
+  dnsNames:
+    - "try.sharing.io"
+    - "*.try.sharing.io"
+#+end_src
+
+** kubectl apply cert
+#+begin_src shell
+kubectl apply -f cert.yaml
+#+end_src
+
+#+RESULTS:
+#+begin_example
+certificate.cert-manager.io/try created
+#+end_example
+** kubectl describe cert
+
+#+begin_src shell
+kubectl -n coder describe certs try
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Name:         try
+Namespace:    coder
+Labels:       <none>
+Annotations:  <none>
+API Version:  cert-manager.io/v1
+Kind:         Certificate
+Metadata:
+  Creation Timestamp:  2023-09-01T22:02:32Z
+  Generation:          1
+  Resource Version:    1731774
+  UID:                 fb214973-3b65-4351-a086-77d8d0f224ab
+Spec:
+  Common Name:  *.try.sharing.io
+  Dns Names:
+    try.sharing.io
+    ,*.try.sharing.io
+  Issuer Ref:
+    Group:      cert-manager.io
+    Kind:       ClusterIssuer
+    Name:       letsencrypt-pdns
+  Secret Name:  try-tls
+Status:
+  Conditions:
+    Last Transition Time:  2023-09-01T22:02:36Z
+    Message:               Certificate is up to date and has not expired
+    Observed Generation:   1
+    Reason:                Ready
+    Status:                True
+    Type:                  Ready
+  Not After:               2023-11-30T21:02:34Z
+  Not Before:              2023-09-01T21:02:35Z
+  Renewal Time:            2023-10-31T21:02:34Z
+  Revision:                1
+Events:
+  Type    Reason     Age   From                                       Message
+  ----    ------     ----  ----                                       -------
+  Normal  Issuing    13s   cert-manager-certificates-trigger          Issuing certificate as Secret does not exist
+  Normal  Generated  13s   cert-manager-certificates-key-manager      Stored new private key in temporary Secret resource "try-lmgx5"
+  Normal  Requested  13s   cert-manager-certificates-request-manager  Created new CertificateRequest resource "try-456ss"
+  Normal  Issuing    9s    cert-manager-certificates-issuing          The certificate has been successfully issued
+#+end_example
+
+** kubectl describe secret
+
+#+begin_src shell
+kubectl -n coder describe secret try-tls
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Name:         try-tls
+Namespace:    coder
+Labels:       controller.cert-manager.io/fao=true
+Annotations:  cert-manager.io/alt-names: *.try.sharing.io,try.sharing.io
+              cert-manager.io/certificate-name: try
+              cert-manager.io/common-name: *.try.sharing.io
+              cert-manager.io/ip-sans:
+              cert-manager.io/issuer-group: cert-manager.io
+              cert-manager.io/issuer-kind: ClusterIssuer
+              cert-manager.io/issuer-name: letsencrypt-pdns
+              cert-manager.io/uri-sans:
+
+Type:  kubernetes.io/tls
+
+Data
+====
+tls.crt:  5538 bytes
+tls.key:  1679 bytes
+#+end_example
+
+* ingress
+** ingress resource yaml
+#+begin_src yaml :tangle ingress.yaml
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: try
+  namespace: coder
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/server-snippets: |
+      location / {
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_http_version 1.1;
+      proxy_set_header X-Forwarded-Host $http_host;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header X-Forwarded-For $remote_addr;
+      proxy_set_header Host $host;
+      proxy_set_header Connection "upgrade";
+      proxy_cache_bypass $http_upgrade;
+      }
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: "try.sharing.io"
+      http:
+        paths:
+          - backend:
+              service:
+                name: tunneld-api
+                port:
+                  name: http
+            path: /
+            pathType: ImplementationSpecific
+    - host: "*.try.sharing.io"
+      http:
+        paths:
+          - backend:
+              service:
+                name: tunneld-api
+                port:
+                  name: http
+            path: /
+            pathType: ImplementationSpecific
+  tls:
+    - hosts:
+        - "try.sharing.io"
+        - "*.try.sharing.io"
+      secretName: try-tls
+#+end_src
+
+** kubectl apply ingress
+#+begin_src shell
+kubectl apply -f ingress.yaml
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ingress.networking.k8s.io/try configured
+#+end_example
+** kubectl describe ingress
+#+begin_src shell
+kubectl -n coder describe ingress try
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Name:             try
+Labels:           <none>
+Namespace:        coder
+Address:
+Ingress Class:    nginx
+Default backend:  <default>
+TLS:
+  try-tls terminates try.sharing.io,*.try.sharing.io
+Rules:
+  Host              Path  Backends
+  ----              ----  --------
+  try.sharing.io
+                    /   tunneld-api:http (10.0.0.99:12345)
+  ,*.try.sharing.io
+                    /   tunneld-api:http (10.0.0.99:12345)
+Annotations:        nginx.ingress.kubernetes.io/proxy-read-timeout: 3600
+                    nginx.ingress.kubernetes.io/proxy-send-timeout: 3600
+                    nginx.ingress.kubernetes.io/server-snippets:
+                      location / {
+                      proxy_set_header Upgrade $http_upgrade;
+                      proxy_http_version 1.1;
+                      proxy_set_header X-Forwarded-Host $http_host;
+                      proxy_set_header X-Forwarded-Proto $scheme;
+                      proxy_set_header X-Forwarded-For $remote_addr;
+                      proxy_set_header Host $host;
+                      proxy_set_header Connection "upgrade";
+                      proxy_cache_bypass $http_upgrade;
+                      }
+Events:
+  Type    Reason  Age   From                      Message
+  ----    ------  ----  ----                      -------
+  Normal  Sync    7s    nginx-ingress-controller  Scheduled for sync
+#+end_example
+* endpoints
+** get
+#+begin_src shell
+kubectl -n coder get endpoints | grep tunneld
+#+end_src
+
+#+RESULTS:
+#+begin_example
+tunneld-api              10.0.0.99:12345   2m24s
+tunneld-wg               10.0.0.99:54321   4s
+#+end_example

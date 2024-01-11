@@ -1,0 +1,17 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: tls-minio-external
+  namespace: minio
+spec:
+  issuerRef:
+    name: letsencrypt-pdns
+    group: cert-manager.io
+    kind: ClusterIssuer
+  commonName: "*.minio.${MINIO_DOMAIN:=examples.com}"
+  secretName: tls-minio-external
+  dnsNames:
+    - "minio.${MINIO_DOMAIN:=examples.com}"
+    - "*.minio.${MINIO_DOMAIN:=examples.com}"
+    - "s3.${MINIO_DOMAIN:=examples.com}"
+    - "*.s3.${MINIO_DOMAIN:=examples.com}"

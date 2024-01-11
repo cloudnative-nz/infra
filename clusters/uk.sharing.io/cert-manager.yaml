@@ -1,0 +1,25 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cert-manager
+  namespace: flux-system
+spec:
+  # dependsOn:
+  #   - name: secrets
+  interval: 5m
+  path: "./infrastructure/controllers/cert-manager"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: cert-manager
+      namespace: cert-manager
+  postBuild:
+    substitute:
+      DNS01_RECURSIVE_NAMESERVERS_ONLY: "true"
+      DNS01_RECURSIVE_NAMESERVERS: 8.8.8.8:53
+      # DNS01_RECURSIVE_NAMESERVERS: 123.253.176.253:53

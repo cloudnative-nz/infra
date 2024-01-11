@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - secrets.yaml
+  - nginx.yaml # EXTERNAL_IP
+  - cert-manager.yaml
+  - cert-manager-pdns.yaml
+  - gitops.yaml
+  - longhorn.yaml
+  - authentik.yaml
+  - coder.yaml
+  - minio-operator.yaml
+  - minio-tenant.yaml
+  - vcluster.yaml
+  # - powerdns.yaml
+  # - harbor.yaml
+  # - ghost.yaml
+  # - reflector.yaml
+  # - external-dns.yaml
+  # - capi.yaml

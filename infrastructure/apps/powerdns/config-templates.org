@@ -1,0 +1,246 @@
+#+title: PowerDNS Jinja Config Templates
+* pdns
+#+name: pdns.conf
+#+begin_src conf :tangle pdns.conf :comments no
+local-address=0.0.0.0,::
+include-dir=/etc/powerdns/pdns.d
+disable-syslog=true
+loglevel=5
+log-dns-details=yes
+webserver-loglevel=detailed
+#+end_src
+* gpsql
+#+name: gpsql.conf
+#+begin_src conf :tangle gpsql.j2 :comments no
+launch=gpgsql
+gpgsql-dnssec={{ PDNS_gpsql_dnssec }}
+gpgsql-host={{ PDNS_gpsql_host }}
+gpgsql-dbname={{ PDNS_gpsql_dbname }}
+gpgsql-user={{ PDNS_gpsql_user }}
+gpgsql-password={{ PDNS_gpsql_password }}
+#+end_src
+* soa-content
+#+name: soa-content.conf
+#+begin_src conf :tangle soa-content.j2 :comments no
+default-soa-content=ns.{{ PRIMARY_DOMAIN }} hostmaster.{{ PRIMARY_DOMAIN }} 0 10800 3600 604800 3600
+#+end_src
+* dnsupdate
+#+name: dnsupdate.conf
+#+begin_src conf :tangle dnsupdate.j2 :comments no
+dnsupdate=yes
+allow-dnsupdate-from=0.0.0.0/0
+#+end_src
+* gsqlite
+#+name: gsqlite.conf
+#+begin_src conf :tangle gsqlite.j2 :comments no
+launch=gsqlite3
+# gsqlite3-dnssec=yes
+gsqlite3-database=/var/lib/powerdns/pdns.sqlite3
+#+end_src
+* _api.conf
+Because template writes occur after writing of _api.conf, we are able to override it here.
+#+name: _api.conf
+#+begin_src conf :tangle _api.j2 :comments no
+webserver
+api
+api-key={{ PDNS_AUTH_API_KEY }}
+webserver-address=0.0.0.0
+webserver-allow-from=0.0.0.0/0
+webserver-password={{ PDNS_AUTH_API_KEY }}
+#+end_src
+* pdns-poststart.py
+There are settings that seem to required the system to be up,
+so we put them into this template here.
+#+begin_src python :tangle pdns-poststart.py :comments no
+#!/usr/bin/env python3
+import os
+
+from powerdnsadmin import create_app
+from powerdnsadmin.models.base import db
+from powerdnsadmin.models.user import User, Role
+from powerdnsadmin.models.domain import Domain
+from powerdnsadmin.models.setting import Setting
+
+app = create_app()
+ctx = app.app_context()
+ctx.push()
+
+db.session.add(Setting("pdns_api_key", os.environ["SECRET_KEY"]))
+db.session.add(Setting("allow_user_create_domain", True))
+db.session.add(Setting("otp_field_enabled", False))
+db.session.add(Setting("session_timeout", 60))
+db.session.add(Setting("site_name", os.environ["PDNS_SITE_NAME"]))
+db.session.add(Setting("pdns_api_url", os.environ["PDNS_URL"]))
+db.session.add(Setting("pdns_version", os.environ["PDNS_VERSION"]))
+
+admin_user = os.environ["PDNS_ADMIN_USER"]
+admin_pass = os.environ["PDNS_ADMIN_PASSWORD"]
+admin_email = os.environ["PDNS_ADMIN_EMAIL"]
+admin_user = User(
+    username=admin_user,
+    plain_text_password=admin_pass,
+    email=admin_email,
+    role_id=Role.query.filter_by(name="Administrator").first().id,
+)
+admin_user.create_local_user()
+db.session.commit()
+
+# Decided configuration for zones is better left with auth
+# DNS Admin just needs admin users created
+# for declared_domain in os.environ["PDNS_DOMAINS"].split(" "):
+#     db.session.add(Domain(name=declared_domain))
+#+end_src
+* Create configmap from files
+#+name: create template configmap
+#+begin_src shell :wrap "src conf :tangle jinja-templates.yaml :comments no"
+kubectl create configmap jinja-templates \
+    --namespace=powerdns \
+    --from-file=pdns.conf=pdns.conf \
+    --from-file=pdns-poststart.py=pdns-poststart.py \
+    --from-file=gpsql.j2=gpsql.j2 \
+    --from-file=soa-content.j2=soa-content.j2 \
+    --from-file=dnsupdate.j2=dnsupdate.j2 \
+    --from-file=_api.j2=_api.j2 \
+    --dry-run=client -o yaml
+#+end_src
+* Resulting configmap
+#+RESULTS: create template configmap
+#+begin_src conf :tangle jinja-templates.yaml :comments no
+apiVersion: v1
+data:
+  _api.j2: |
+    webserver
+    api
+    api-key={{ PDNS_AUTH_API_KEY }}
+    webserver-address=0.0.0.0
+    webserver-allow-from=0.0.0.0/0
+    webserver-password={{ PDNS_AUTH_API_KEY }}
+  dnsupdate.j2: |
+    dnsupdate=yes
+    allow-dnsupdate-from=0.0.0.0/0
+  gpsql.j2: |
+    launch=gpgsql
+    gpgsql-dnssec={{ PDNS_gpsql_dnssec }}
+    gpgsql-host={{ PDNS_gpsql_host }}
+    gpgsql-dbname={{ PDNS_gpsql_dbname }}
+    gpgsql-user={{ PDNS_gpsql_user }}
+    gpgsql-password={{ PDNS_gpsql_password }}
+  pdns-poststart.py: |
+    #!/usr/bin/env python3
+    import os
+
+    from powerdnsadmin import create_app
+    from powerdnsadmin.models.base import db
+    from powerdnsadmin.models.user import User, Role
+    from powerdnsadmin.models.domain import Domain
+    from powerdnsadmin.models.setting import Setting
+
+    app = create_app()
+    ctx = app.app_context()
+    ctx.push()
+
+    db.session.add(Setting("pdns_api_key", os.environ["SECRET_KEY"]))
+    db.session.add(Setting("allow_user_create_domain", True))
+    db.session.add(Setting("otp_field_enabled", False))
+    db.session.add(Setting("session_timeout", 60))
+    db.session.add(Setting("site_name", os.environ["PDNS_SITE_NAME"]))
+    db.session.add(Setting("pdns_api_url", os.environ["PDNS_URL"]))
+    db.session.add(Setting("pdns_version", os.environ["PDNS_VERSION"]))
+
+    admin_user = os.environ["PDNS_ADMIN_USER"]
+    admin_pass = os.environ["PDNS_ADMIN_PASSWORD"]
+    admin_email = os.environ["PDNS_ADMIN_EMAIL"]
+    admin_user = User(
+        username=admin_user,
+        plain_text_password=admin_pass,
+        email=admin_email,
+        role_id=Role.query.filter_by(name="Administrator").first().id,
+    )
+    admin_user.create_local_user()
+    db.session.commit()
+
+    # Decided configuration for zones is better left with auth
+    # DNS Admin just needs admin users created
+    # for declared_domain in os.environ["PDNS_DOMAINS"].split(" "):
+    #     db.session.add(Domain(name=declared_domain))
+  pdns.conf: |
+    local-address=0.0.0.0,::
+    include-dir=/etc/powerdns/pdns.d
+    disable-syslog=true
+    loglevel=5
+    log-dns-details=yes
+    webserver-loglevel=detailed
+  soa-content.j2: |
+    default-soa-content=ns.{{ PRIMARY_DOMAIN }} hostmaster.{{ PRIMARY_DOMAIN }} 0 10800 3600 604800 3600
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: jinja-templates
+  namespace: powerdns
+#+end_src
+
+* env TEMPLATE_FILES
+#+begin_src yaml
+spec:
+  template:
+    spec:
+      volumes:
+        - name: jinja-templates
+          configMap:
+            name: jinja-templates
+      containers:
+        - name: auth
+          env:
+            # templateroot = /etc/powerdns/templates.d
+            # templatedestination = '/etc/powerdns/pdns.d'
+            - name: TEMPLATE_FILES
+              value: "_api.conf,dnsupdate.conf,gpsql.conf,soa-content.conf"
+          volumeMounts:
+            - mountPath: /etc/powerdns/templates.d
+              name: jinja-templates
+              readOnly: false
+#+end_src
+* Underlying pdns/dockerdata/startup.py
+
+** [[https://github.com/PowerDNS/pdns/blob/master/dockerdata/startup.py#L6-L13][default startup settings]]
+#+begin_src python
+program = sys.argv[0].split('-')[0]
+product = os.path.basename(program)
+
+apienvvar = None
+apiconftemplate = None
+templateroot = '/etc/powerdns/templates.d'
+templatedestination = ''
+args = []
+#+end_src
+
+** [[https://github.com/PowerDNS/pdns/blob/master/dockerdata/startup.py#L25-L34][pdns_server startup config]]
+#+begin_src python
+elif product == 'pdns_server':
+    args = ['--disable-syslog']
+    apienvvar = 'PDNS_AUTH_API_KEY'
+    apiconftemplate = """webserver
+api
+api-key={{ apikey }}
+webserver-address=0.0.0.0
+webserver-allow-from=0.0.0.0/0
+webserver-password={{ apikey }}
+    """
+    templatedestination = '/etc/powerdns/pdns.d'
+#+end_src
+
+** [[https://github.com/PowerDNS/pdns/blob/master/dockerdata/startup.py#L56-L66][Write out jinja templates.d/TEMPLATE_FILES.j2]]
+
+#+begin_src python
+templates = os.getenv('TEMPLATE_FILES')
+if templates is not None:
+    for templateFile in templates.split(','):
+        template = None
+        with open(os.path.join(templateroot, templateFile + '.j2')) as f:
+            template = jinja2.Template(f.read())
+        rendered = template.render(os.environ)
+        target = os.path.join(templatedestination, templateFile + '.conf')
+        with open(target, 'w') as f:
+            f.write(rendered)
+        print("Created {} with content:\n{}\n".format(target, rendered))
+#+end_src

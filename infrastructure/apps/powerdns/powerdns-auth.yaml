@@ -1,0 +1,186 @@
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: powerdns-auth
+#   namespace: powerdns
+# spec:
+#   storageClassName: longhorn
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth
+  namespace: powerdns
+  labels:
+    powerdns: auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      powerdns: auth
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        powerdns: auth
+    spec:
+      # By default port 53 needs to be opened by root
+      # We might be able to fix this via CAPABILITIES
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+      #   fsGroup: 2000
+      restartPolicy: Always
+      # initContainers:
+      #   # This container ensures the pdns.sqlite3 db is created
+      #   - name: config
+      #     image: powerdns/pdns-auth-48:4.8.1
+      #     command:
+      #       [
+      #         "sh",
+      #         "-c",
+      #         "set -e ; set -x ; if [ ! -e /var/lib/powerdns/pdns.sqlite3 ] ; then echo Creating /var/lib/powerdns/pdns.sqlite3 ; sqlite3 /var/lib/powerdns/pdns.sqlite3 < /usr/local/share/doc/pdns/schema.sqlite3.sql ; else echo Existing /var/lib/powerdns/pdns.sqlite3 ; fi ; ls -lah /var/lib/powerdns/pdns.sqlite3",
+      #       ]
+      #     volumeMounts:
+      #       - mountPath: /etc/powerdns
+      #         name: powerdns-auth
+      containers:
+        - name: auth
+          image: powerdns/pdns-auth-48:4.8.1
+          # command: ["sleep", "999999"]
+          # command: ["pdns_server"]
+          # args:
+          #   - "--disable-syslog=true"
+          #   - "--loglevel=5"
+          #   - "--query-logging=yes"
+          #   - "--log-dns-details=yes"
+          #   - "--webserver-loglevel=detailed"
+          ports:
+            - containerPort: 53
+              protocol: UDP
+            - containerPort: 53
+            - containerPort: 8081
+          env:
+            # templateroot = /etc/powerdns/templates.d
+            # templatedestination = '/etc/powerdns/pdns.d'
+            - name: PRIMARY_DOMAIN
+              value: "uk.cloudnative.coop"
+            - name: TEMPLATE_FILES
+              value: "_api,gpsql,dnsupdate,soa-content"
+            - name: PDNS_AUTH_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: powerdns
+                  key: api_key
+            - name: PDNS_gpsql_dnssec
+              value: "yes"
+            - name: PDNS_gpsql_host
+              value: "pdns-db-postgresql"
+            - name: PDNS_gpsql_dbname
+              value: "postgres"
+            - name: PDNS_gpsql_user
+              value: "postgres"
+            - name: PDNS_gpsql_password
+              valueFrom:
+                secretKeyRef:
+                  name: powerdns
+                  key: postgres_password
+            - name: PDNS_SITE_NAME
+              value: "PowerDNS for uk.cloudnative.coop!"
+          volumeMounts:
+            # We could make another configmap
+            # or even jinja template this out
+            - mountPath: /etc/powerdns/pdns.conf
+              name: jinja-templates
+              subPath: pdns.conf
+            - mountPath: /etc/powerdns/templates.d
+              name: jinja-templates
+              readOnly: false
+            # - mountPath: /var/lib/powerdns
+            #   name: powerdns-auth
+            # We use to do a lot of configuration via secrets
+            # and mount them directl... going to try to use
+            # ENV vars and templates instead
+            # - mountPath: /etc/powerdns
+            #   name: powerdns
+            #   readOnly: false
+            # Being cheeky for now, we need _api.conf
+            # - mountPath: /etc/powerdns/pdns.d
+            #   name: powerdns
+            #   readOnly: false
+          resources: {}
+
+          lifeCycle:
+            # from  https://github.com/aescanero/helm-charts/blob/76fcfc3de2db248acaa73c9a1c7572c19bf96504/charts/powerdns/templates/powerdns-deployment.yaml#L36-L42 postStart:
+            postStart:
+              exec:
+                command:
+                  - "touch"
+                  - "/tmp/poststart"
+                # command:
+                #   - "/bin/sh"
+                #   - "-c"
+                #   - |-
+                #     sleep 99
+                # command:
+                #   - "/bin/sh"
+                #   - "-c"
+                #   - |-
+                #     a=0
+                #     while [ $a -lt 200 ]
+                #     do sleep 1
+                #       a=$[a+1]
+                #       echo 'stage: '$a
+                #       if pdnsutil list-zone ii.nz
+                #         then echo ii.nz already created
+                #         break
+                #       elif pdnsutil create-zone ii.nz
+                #         then echo CREATED
+                #       else sleep 1
+                #       fi
+                #     done
+                #     do sleep 1
+                #       a=$[a+1]
+                #       echo 'stage: '$a
+                #       if pdnsutil list-zone hackbach.nz
+                #         then echo hackbach.nz already created
+                #         break
+                #       elif pdnsutil create-zone hachbach.nz
+                #         then echo CREATED
+                #       else sleep 1
+                #       fi
+                #     done
+      volumes:
+        - name: jinja-templates
+          configMap:
+            name: jinja-templates
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: auth-web
+#   labels:
+#     powerdns: auth
+#   annotations:
+#     metallb.universe.tf/address-pool: default
+#     metallb.universe.tf/allow-shared-ip: "thinkpad"
+# spec:
+#   externalTrafficPolicy: Local
+#   annotations:
+#     metallb.universe.tf/address-pool: default
+#     metallb.universe.tf/allow-shared-ip: "thinkpad"
+#   type: LoadBalancer
+#   loadBalancerIP: 192.168.1.151
+#   selector:
+#     powerdns: auth
+#   ports:
+#     - name: "auth-web"
+#       protocol: TCP
+#       port: 8081
+#       targetPort: 8081

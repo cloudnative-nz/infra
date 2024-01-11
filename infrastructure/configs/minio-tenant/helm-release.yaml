@@ -1,0 +1,158 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: minio
+  namespace: flux-system
+spec:
+  targetNamespace: minio
+  releaseName: minio
+  # install:
+  #   createNamespace: true
+  storageNamespace: flux-system
+  maxHistory: 10
+  interval: 30m
+  chart:
+    spec:
+      chart: tenant
+      version: "v5.0.7" # Current as of Augst 7th, 2023
+      interval: 12h
+      sourceRef:
+        kind: HelmRepository
+        name: minio
+        namespace: flux-system
+  dependsOn:
+    - name: minio-operator
+  values:
+    secrets:
+      # seems these are required
+      # not sure how to reference "existingSecret"
+      # name: minio-env-config
+      # accessKey: hippiehacker
+      # secretKey: password
+      existingSecret: minio-env-config
+    # the config.env must be loaded from this secret
+    tenant:
+      name: minio
+      configuration:
+        name: minio-env-config
+      ## Add environment variables to be set in MinIO container (https://github.com/minio/minio/tree/master/docs/config)
+      # GIVES UNEXPECTED EOF
+      env:
+        # https://goauthentik.io/integrations/services/minio/#minio
+        - name: MINIO_IDENTITY_OPENID_CONFIG_URL
+          value: "https://auth.${MINIO_DOMAIN:=examples.com}/application/o/minio/.well-known/openid-configuration"
+        - name: MINIO_IDENTITY_OPENID_SCOPES
+          value: "openid,profile,email,minio"
+        - name: MINIO_IDENTITY_OPENID_DISPLAY_NAME
+          value: "Login with auth.${MINIO_DOMAIN:=examples.com}"
+        - name: MINIO_IDENTITY_OPENID_COMMENT
+          value: "Hello from OPENID_COMMENT"
+        - name: MINIO_IDENTITY_OPENID_REDIRECT_URI_DYNAMIC
+          value: "on"
+        # - name: MINIO_BROWSER_REDIRECT_URL
+        #   value: "https://auth.${MINIO_DOMAIN:=examples.com}/oauth_callback"
+        # - name: MINIO_IDENTITY_OPENID_REDIRECT_URI
+        #   value: ""
+        # - name: MINIO_IDENTITY_OPENID_CLAIM_NAME
+        #   value: ""
+        # - name: MINIO_IDENTITY_OPENID_CLAIM_PREFIX
+        #   value: ""
+      # env:
+      #   - name: MINIO_SERVER_URL
+      #     value: https://minapi.uk.cloudnative.coop
+      certificate:
+        requestAutoCert: true
+      # TODO: setup s3.uk.cloudnative.coop
+      # AND bucketDNS
+      # AND SFTP
+      ## MinIO features to enable or disable in the MinIO Tenant
+      ## https://github.com/minio/operator/blob/master/docs/tenant_crd.adoc#features
+      features:
+        # bucketDNS: false
+        enableSFTP: true
+        bucketDNS: true
+        domains:
+          minio:
+            - https://s3.${MINIO_DOMAIN:=examples.com}
+      pools:
+        - name: pool-0
+          size: 20Gi
+          servers: 1
+          volumesPerServer: 1
+          storageClassName: longhorn
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            runAsNonRoot: true
+          containerSecurityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+    ingress:
+      api:
+        host: "s3.${MINIO_DOMAIN:=examples.com}"
+        enabled: true
+        ingressClassName: "nginx"
+        labels: {}
+        annotations:
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          # nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+          nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+          # https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#custom-max-body-size
+          # Due to longhorn minio backups for abcs.news giving a 413 error: Entity Too Large
+          nginx.ingress.kubernetes.io/proxy-body-size: 64m
+        pathType: Prefix
+        path: /
+        tls:
+          - secretName: tls-minio-external
+            hosts:
+              - "s3.${MINIO_DOMAIN:=examples.com}"
+              - "*.s3.${MINIO_DOMAIN:=examples.com}"
+      console:
+        enabled: true
+        host: "minio.${MINIO_DOMAIN:=examples.com}"
+        ingressClassName: "nginx"
+        labels: {}
+        # When we get back to using TLS, we might need this
+        annotations:
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          # nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+          nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+        pathType: ImplementationSpecific
+        # pathType: Prefix
+        path: /
+        tls:
+          - secretName: tls-minio-external
+            hosts:
+              - "minio.${MINIO_DOMAIN:=examples.com}"
+    # extraResources:
+    #   - |
+    #     apiVersion: v1
+    #     kind: Service
+    #     metadata:
+    #       labels:
+    #         v1.min.io/tenant: minio
+    #       name: minio-sftp
+    #       namespace: minio
+    #     # We might be able to run this on port 22 if we used another IP
+    #     # And DNS name
+    #     spec:
+    #       type: LoadBalancer
+    #       allocateLoadBalancerNodePorts: true
+    #       ports:
+    #         - name: sftp-minio
+    #           port: 8022
+    #           protocol: TCP
+    #           targetPort: 8022
+    #       externalIPs:
+    #         - 145.40.113.209
+    #       selector:
+    #         v1.min.io/tenant: minio
+    #       ipFamilyPolicy: SingleStack
+    #       externalTrafficPolicy: Cluster
+    #       internalTrafficPolicy: Cluster
+    #       sessionAffinity: None
+    #       ipFamilies:
+    #         - IPv4
